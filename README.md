@@ -9,4 +9,18 @@ criam workspaces e atendem chamados. **Todo o desenvolvimento desse front aconte
   tem backend próprio.
 - **Pilha e regras:** as mesmas do app mobile (`SistemaAG3.ai-Mobile`): React, Vite, TypeScript, Tailwind, Zod em toda
   resposta da API, testes com a API simulada e nenhum segredo no navegador.
-- **Situação:** nada implementado. O código começa na onda 2 do plano, depois do backend da onda 1.
+- **Situação:** F1 feita (esqueleto, login com 2FA e sessão própria, menu por papel). Próximas: F2 carteira e
+  cliente, F3 mensalidades em atraso, F4 novo workspace e equipe, F5 imagem e deploy no cluster.
+
+## Rodar
+
+Node 22 (`nvm use`):
+
+```bash
+npm install
+npm run dev      # http://localhost:3100, API pelo proxy até o Django local (DEV_BACKEND_URL)
+npm run lint && npm test && npm run build
+```
+
+O login é o do sistema, com o código por e-mail sempre pedido. Só entra quem é membro ativo de um parceiro ativo ou
+da equipe AG3 (`support_staff`), cadastrados no Django Admin.
