@@ -17,7 +17,9 @@ vi.mock("@/api/auth", async (original) => ({
     logout: vi.fn(),
   },
 }));
-vi.mock("@/api/partners", () => ({ partnersApi: { me: vi.fn() } }));
+vi.mock("@/api/partners", () => ({
+  partnersApi: { me: vi.fn(), portfolio: vi.fn().mockResolvedValue({ data: [], count: 0 }) },
+}));
 
 const challenge = {
   mfa_required: true as const,

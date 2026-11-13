@@ -6,6 +6,7 @@ import { AuthProvider } from "@/features/auth/AuthProvider";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { CarteiraPage } from "@/features/carteira/CarteiraPage";
+import { ClientePage } from "@/features/carteira/ClientePage";
 import { ContaPage } from "@/features/conta/ContaPage";
 import { EquipePage } from "@/features/equipe/EquipePage";
 import { AppShell, RequireNav } from "@/features/shell/AppShell";
@@ -31,6 +32,7 @@ export function AppRoutes() {
         <Route element={<AppShell />}>
           <Route element={<RequireNav />}>
             <Route index element={<CarteiraPage />} />
+            <Route path="/clientes/:id" element={<ClientePage />} />
             <Route path="/atrasados" element={<AtrasadosPage />} />
             <Route path="/novo-workspace" element={<NovoWorkspacePage />} />
             <Route path="/equipe" element={<EquipePage />} />

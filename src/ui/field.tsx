@@ -1,4 +1,9 @@
-import { useId, type InputHTMLAttributes, type ReactNode } from "react";
+import {
+  useId,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type TextareaHTMLAttributes,
+} from "react";
 import { cn } from "@/lib/utils";
 
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -36,6 +41,32 @@ export function Field({ label, leading, trailing, className, ...props }: FieldPr
         />
         {trailing && <div className="absolute inset-y-0 right-0 flex items-center">{trailing}</div>}
       </div>
+    </div>
+  );
+}
+
+interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+  hint?: ReactNode;
+}
+
+export function TextArea({ label, hint, className, ...props }: TextAreaProps) {
+  const id = useId();
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="block text-sm font-medium">
+        {label}
+      </label>
+      <textarea
+        id={id}
+        rows={3}
+        className={cn(
+          "w-full rounded-xl border border-input bg-background px-3.5 py-2.5 text-base outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring",
+          className
+        )}
+        {...props}
+      />
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
