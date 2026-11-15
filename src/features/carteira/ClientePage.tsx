@@ -5,16 +5,19 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { partnersApi, type CompanyDetail } from "@/api/partners";
 import { usePanel } from "@/features/auth/AuthProvider";
+import { BillingPanel } from "@/features/mensalidade/BillingPanel";
 import { formatCost, formatDate, formatInt, formatMinutes, formatMonth } from "@/lib/format";
-import { COMPANY_ROLE_LABELS, USER_STATUS, label, planStatus } from "@/lib/labels";
+import {
+  COMPANY_ROLE_LABELS,
+  SUSPENSION_EFFECTS,
+  USER_STATUS,
+  label,
+  planStatus,
+} from "@/lib/labels";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { ErrorText } from "@/ui/feedback";
 import { TextArea } from "@/ui/field";
-
-/** O que a suspensão faz, dito do mesmo jeito em todo lugar do painel (plano de parceiros §13, D20). */
-export const SUSPENSION_EFFECTS =
-  "Ninguém da empresa entra no sistema, nada sai pelo WhatsApp (IA, cadências, campanhas e fluxos param) e as mensagens que chegarem ficam guardadas, sem resposta automática.";
 
 function Section({
   title,
@@ -329,6 +332,9 @@ export function ClientePage() {
         <UsageNow company={company} />
         <Section title="Situação">
           <StatusActions company={company} />
+        </Section>
+        <Section title="Mensalidade">
+          <BillingPanel companyId={company.id} />
         </Section>
         <History company={company} />
         <Users company={company} />

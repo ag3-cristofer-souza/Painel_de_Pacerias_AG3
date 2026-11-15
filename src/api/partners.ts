@@ -114,3 +114,70 @@ export const partnersApi = {
     ).data;
   },
 };
+
+// ── novo workspace e equipe do parceiro ──
+const memberSchema = z.object({
+  id: z.string(),
+  user_id: z.string(),
+  full_name: z.string(),
+  email: z.string(),
+  role: z.string(),
+  is_active: z.boolean(),
+  created_at: z.string(),
+});
+
+export type Member = z.infer<typeof memberSchema>;
+export type MemberRole = "owner" | "admin" | "support" | "viewer";
+
+export interface WorkspaceInput {
+  name: string;
+  cnpj?: string;
+  admin_name: string;
+  admin_email: string;
+}
+
+export const workspaceApi = {
+  /** Cliente novo do parceiro, dentro do limite do contrato, com o primeiro admin convidado por e-mail. */
+  create: async (input: WorkspaceInput): Promise<PortfolioCompany> => {
+    const body: Record<string, string> = {
+      name: input.name.trim(),
+      admin_name: input.admin_name.trim(),
+      admin_email: input.admin_email.trim().toLowerCase(),
+    };
+    if (input.cnpj?.trim()) body.cnpj = input.cnpj.trim();
+    return (await api.post("/partners/companies", z.object({ data: portfolioCompanySchema }), body))
+      .data;
+  },
+};
+
+export const teamApi = {
+  list: async (): Promise<Member[]> =>
+    (await api.get("/partners/team", z.object({ data: z.array(memberSchema) }))).data,
+
+  /** Só pessoa nova: a conta nasce sem senha e recebe o convite por e-mail. */
+  invite: async (input: { full_name: string; email: string; role: MemberRole }): Promise<Member> =>
+    (
+      await api.post("/partners/team", z.object({ data: memberSchema }), {
+        full_name: input.full_name.trim(),
+        email: input.email.trim().toLowerCase(),
+        role: input.role,
+      })
+    ).data,
+
+  update: async (id: string, change: { role?: MemberRole; is_active?: boolean }): Promise<Member> =>
+    (
+      await api.patch(
+        `/partners/team/${encodeURIComponent(id)}`,
+        z.object({ data: memberSchema }),
+        change
+      )
+    ).data,
+
+  /** Tira da equipe sem apagar a conta: a pessoa perde o acesso aos clientes e ao painel. */
+  remove: async (id: string): Promise<void> => {
+    await api.delete(
+      `/partners/team/${encodeURIComponent(id)}`,
+      z.object({ success: z.boolean() })
+    );
+  },
+};

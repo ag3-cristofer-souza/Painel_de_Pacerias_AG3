@@ -1,0 +1,31 @@
+# ${PORT}: a imagem oficial do nginx substitui na subida. Padrão 80.
+server {
+    listen ${PORT};
+    server_name _;
+    server_tokens off;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript image/svg+xml;
+
+    # Sem hash no nome: precisam sair sempre atualizados, senão o navegador fica com a versão velha.
+    location ~ ^/(index\.html|runtime-config\.js)$ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        try_files $uri =404;
+    }
+
+    # Nome com hash: nunca muda.
+    location /assets/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
+    location / {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
+        try_files $uri /index.html;
+    }
+}

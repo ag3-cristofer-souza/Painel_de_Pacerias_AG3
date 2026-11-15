@@ -9,6 +9,7 @@ import { CarteiraPage } from "@/features/carteira/CarteiraPage";
 import { ClientePage } from "@/features/carteira/ClientePage";
 import { ContaPage } from "@/features/conta/ContaPage";
 import { EquipePage } from "@/features/equipe/EquipePage";
+import { MensalidadePage } from "@/features/mensalidade/MensalidadePage";
 import { AppShell, RequireNav } from "@/features/shell/AppShell";
 import { NovoWorkspacePage } from "@/features/workspace/NovoWorkspacePage";
 
@@ -34,6 +35,7 @@ export function AppRoutes() {
             <Route index element={<CarteiraPage />} />
             <Route path="/clientes/:id" element={<ClientePage />} />
             <Route path="/atrasados" element={<AtrasadosPage />} />
+            <Route path="/mensalidade/:id" element={<MensalidadePage />} />
             <Route path="/novo-workspace" element={<NovoWorkspacePage />} />
             <Route path="/equipe" element={<EquipePage />} />
             <Route path="/conta" element={<ContaPage />} />

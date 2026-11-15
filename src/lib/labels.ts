@@ -32,3 +32,12 @@ export const USER_STATUS: Record<string, StatusLabel> = {
 };
 
 export const label = (map: Record<string, string>, code: string) => map[code] ?? code;
+
+/** O que a suspensão faz, dito do mesmo jeito em todo lugar do painel (plano de parceiros §13, D20). */
+export const SUSPENSION_EFFECTS =
+  "Ninguém da empresa entra no sistema, nada sai pelo WhatsApp (IA, cadências, campanhas e fluxos param) e as mensagens que chegarem ficam guardadas, sem resposta automática.";
+
+export const POSTPONE_KIND: Record<string, string> = {
+  manual: "Adiamento manual",
+  agreement: "Acordo com o cliente",
+};

@@ -6,6 +6,20 @@ import { partnersApi, type CompanyDetail, type PortfolioCompany } from "@/api/pa
 import { setToken } from "@/lib/session";
 import { partnerPanel, renderApp, staffPanel } from "@/test/render";
 
+vi.mock("@/api/billing", () => ({
+  billingApi: {
+    get: vi.fn().mockResolvedValue({
+      company: { id: "c1", name: "Loja Azul" },
+      enrolled: false,
+      auto_suspend: true,
+      suspended: false,
+      suspended_by_billing: false,
+      summary: "Vencimento ainda não informado.",
+      timeline: [],
+      history: [],
+    }),
+  },
+}));
 vi.mock("@/api/partners", () => ({
   partnersApi: { me: vi.fn(), portfolio: vi.fn(), company: vi.fn(), setCompanyStatus: vi.fn() },
 }));
@@ -102,7 +116,7 @@ describe("cliente", () => {
     await user.click(await screen.findByRole("button", { name: "Suspender cliente" }));
     const confirmar = screen.getByRole("button", { name: "Confirmar suspensão" });
     expect(confirmar).toBeDisabled(); // sem motivo, não suspende
-    expect(screen.getByText(/nada sai pelo WhatsApp/)).toBeInTheDocument();
+    expect(screen.getByText(/Ao suspender: .*nada sai pelo WhatsApp/)).toBeInTheDocument();
 
     vi.mocked(partnersApi.company).mockResolvedValue(detalhe({ plan: { status: "suspended" } }));
     await user.type(screen.getByLabelText("Motivo da suspensão"), "contrato encerrado");

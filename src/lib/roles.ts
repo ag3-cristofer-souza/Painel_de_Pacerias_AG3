@@ -26,3 +26,19 @@ export function panelRoleLabel(panel: Panel): string {
 }
 
 export const isOwner = (panel: Panel) => panel.kind === "partner" && panel.member_role === "owner";
+
+/** Mexe na mensalidade (vencimento, pagamento, adiamento): dono ou admin do parceiro; a equipe AG3, em todos. */
+export const canWriteBilling = (panel: Panel) => panel.kind === "ag3" || panel.can_admin_workspaces;
+
+/** O que cada papel do parceiro faz, para quem convida escolher sem adivinhar. */
+export const MEMBER_ROLE_HELP: Record<string, string> = {
+  owner:
+    "Tudo o que o administrador faz, mais a equipe: convida pessoas, muda papéis e tira da equipe.",
+  admin:
+    "Entra nos clientes como administrador, cria workspaces, suspende e reativa clientes e cuida da mensalidade.",
+  support:
+    "Acompanha a carteira e a mensalidade e vai atender os chamados dos clientes. Não entra nos clientes como administrador.",
+  viewer: "Só acompanha a carteira, o uso e a mensalidade, sem alterar nada.",
+};
+
+export const MEMBER_ROLES = ["owner", "admin", "support", "viewer"] as const;
