@@ -89,58 +89,18 @@
   }
 }
 
-/* Fundo das telas da marca (login, instalação): brilho azul no alto, pontilhado discreto e escurecido no rodapé. */
-.brand-screen {
+/* Lado da marca na entrada: azul-marinho da AG3 com grade fina de "painel de controle" e brilho azul nos cantos —
+   sóbrio, de central de atendimento, e diferente do globo do app mobile. */
+.partner-hero {
   background-color: #12224e;
   background-image:
-    radial-gradient(60% 45% at 50% 18%, rgba(47, 107, 255, 0.35) 0%, rgba(47, 107, 255, 0) 70%),
-    radial-gradient(80% 50% at 50% 110%, rgba(4, 10, 40, 0.75) 0%, rgba(4, 10, 40, 0) 70%),
-    radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+    radial-gradient(55% 45% at 0% 100%, rgba(37, 99, 235, 0.45) 0%, rgba(37, 99, 235, 0) 70%),
+    radial-gradient(45% 35% at 100% 0%, rgba(91, 147, 255, 0.22) 0%, rgba(91, 147, 255, 0) 70%),
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size:
     100% 100%,
     100% 100%,
-    22px 22px;
-}
-
-.globo {
-  --d: 132px;
-  width: var(--d);
-  height: var(--d);
-  border-radius: 50%;
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  flex: 0 0 auto;
-  background: radial-gradient(circle at 38% 32%, #5b93ff 0, #0048f0 45%, #001884 85%, #000c6c 100%);
-  box-shadow: 0 18px 50px rgba(0, 48, 180, 0.35);
-}
-.globo-mapa {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: auto;
-  max-width: none;
-  aspect-ratio: 720 / 140;
-  fill: #dbe5fb;
-  animation: globo-gira 8s linear infinite;
-}
-/* Brilho no alto à esquerda e borda escurecida: é o que faz o mapa chapado parecer esfera. */
-.globo::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 34% 27%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 36%),
-    radial-gradient(circle at 50% 50%, rgba(0, 8, 60, 0) 52%, rgba(0, 8, 60, 0.6) 100%);
-}
-@keyframes globo-gira {
-  from {
-    transform: translateX(-50%);
-  }
-  to {
-    transform: translateX(0);
-  }
+    32px 32px,
+    32px 32px;
 }
