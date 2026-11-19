@@ -21,6 +21,7 @@ vi.mock("@/api/billing", () => ({
   },
 }));
 vi.mock("@/api/partners", () => ({
+  alertsApi: { list: vi.fn(), acknowledge: vi.fn() },
   partnersApi: {
     me: vi.fn(),
     portfolio: vi.fn(),
@@ -91,6 +92,7 @@ describe("carteira", () => {
       search: "verde",
       limit: 50,
       offset: 0,
+      sort: "health",
     });
   });
 

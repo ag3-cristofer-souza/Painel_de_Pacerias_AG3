@@ -8,6 +8,7 @@ describe("menu por quem está no painel", () => {
   it("dono do parceiro vê tudo", () => {
     expect(labels(visibleNav(partnerPanel()))).toEqual([
       "Carteira",
+      "Alertas",
       "Mensalidades em atraso",
       "Novo workspace",
       "Equipe",
@@ -24,6 +25,7 @@ describe("menu por quem está no painel", () => {
   it("equipe AG3 não tem equipe de parceiro nem cria workspace", () => {
     expect(labels(visibleNav(staffPanel()))).toEqual([
       "Carteira",
+      "Alertas",
       "Mensalidades em atraso",
       "Minha conta",
     ]);

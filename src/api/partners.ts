@@ -45,6 +45,30 @@ const planSchema = z.object({
   minutes_limit: z.number().optional(),
 });
 
+// ── alertas por cliente (`/partners/alerts`) ──
+const alertSchema = z.object({
+  id: z.string(),
+  company_id: z.string(),
+  company_name: z.string(),
+  kind: z.string(),
+  /** Nome do tipo ("Canal desconectado"); o texto do problema em si é `title`. */
+  kind_label: z.string(),
+  severity: z.enum(["warning", "danger"]),
+  state: z.enum(["open", "acknowledged", "resolved"]),
+  title: z.string(),
+  opened_at: z.string(),
+  last_seen_at: z.string(),
+  acknowledged_at: z.string().optional(),
+  acknowledged_by_name: z.string().optional(),
+  resolved_at: z.string().optional(),
+});
+
+/** Pontuação de 0 a 100 (100 = nada aberto) e os alertas ativos do cliente. */
+const healthSchema = z.object({ score: z.number(), alerts: z.number(), danger: z.number() });
+
+export type Alert = z.infer<typeof alertSchema>;
+export type Health = z.infer<typeof healthSchema>;
+
 const portfolioCompanySchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -53,6 +77,7 @@ const portfolioCompanySchema = z.object({
   usage: usageSchema,
   /** Passos iniciais do plano já feitos pelo cliente (implantação). Ausente se o servidor não conseguiu contar. */
   onboarding: z.object({ done: z.number(), total: z.number() }).optional(),
+  health: healthSchema.optional(),
 });
 
 const companyDetailSchema = portfolioCompanySchema.extend({
@@ -67,6 +92,8 @@ const companyDetailSchema = portfolioCompanySchema.extend({
       status: z.string().optional(),
     })
   ),
+  /** Alertas ativos do cliente (abertos e já vistos). */
+  alerts: z.array(alertSchema).optional(),
 });
 
 export type Usage = z.infer<typeof usageSchema>;
@@ -78,6 +105,8 @@ export interface PortfolioQuery {
   search?: string;
   limit?: number;
   offset?: number;
+  /** `health`: pior saúde primeiro; `name`: ordem alfabética. */
+  sort?: "health" | "name";
 }
 
 export const partnersApi = {
@@ -85,8 +114,9 @@ export const partnersApi = {
     (await api.get("/partners/me", z.object({ data: panelSchema }))).data,
 
   /** Clientes do parceiro; para a equipe AG3, os clientes diretos (sem parceiro). */
-  portfolio: async ({ search, limit = 50, offset = 0 }: PortfolioQuery = {}) => {
+  portfolio: async ({ search, limit = 50, offset = 0, sort }: PortfolioQuery = {}) => {
     const params: Record<string, unknown> = { limit, offset };
+    if (sort) params.sort = sort;
     if (search?.trim()) params.search = search.trim();
     return api.get(
       "/partners/companies",
@@ -199,4 +229,29 @@ export const teamApi = {
       z.object({ success: z.boolean() })
     );
   },
+};
+
+export const alertsApi = {
+  /** Da carteira de quem pede: ativos (pior primeiro) ou resolvidos (mais recentes primeiro). */
+  list: async ({
+    state = "active",
+    companyId,
+  }: { state?: "active" | "resolved"; companyId?: string } = {}) => {
+    const params: Record<string, unknown> = { state, limit: 200 };
+    if (companyId) params.company_id = companyId;
+    return api.get(
+      "/partners/alerts",
+      z.object({ data: z.array(alertSchema), count: z.number() }),
+      params
+    );
+  },
+
+  /** "Já vi": continua na lista até o problema acabar, com peso menor na saúde. */
+  acknowledge: async (id: string): Promise<Alert> =>
+    (
+      await api.post(
+        `/partners/alerts/${encodeURIComponent(id)}/acknowledge`,
+        z.object({ data: alertSchema })
+      )
+    ).data,
 };

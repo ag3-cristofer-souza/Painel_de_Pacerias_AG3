@@ -5,6 +5,7 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { partnersApi, type CompanyDetail } from "@/api/partners";
 import { usePanel } from "@/features/auth/AuthProvider";
+import { AlertList } from "@/features/alertas/AlertList";
 import { BillingPanel } from "@/features/mensalidade/BillingPanel";
 import { formatCost, formatDate, formatInt, formatMinutes, formatMonth } from "@/lib/format";
 import {
@@ -423,6 +424,11 @@ export function ClientePage() {
       )}
 
       <div className="space-y-4">
+        {company.alerts && company.alerts.length > 0 && (
+          <Section title="Alertas">
+            <AlertList alerts={company.alerts} showCompany={false} />
+          </Section>
+        )}
         <UsageNow company={company} />
         <Section title="Plano">
           <PlanActions company={company} />

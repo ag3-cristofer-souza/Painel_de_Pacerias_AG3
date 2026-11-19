@@ -1,4 +1,12 @@
-import { AlarmClock, Building2, CirclePlus, UserRound, Users, type LucideIcon } from "lucide-react";
+import {
+  AlarmClock,
+  BellRing,
+  Building2,
+  CirclePlus,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import type { Panel } from "@/api/partners";
 
 export interface NavItem {
@@ -13,6 +21,7 @@ const always = () => true;
 
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Carteira", icon: Building2, visible: always },
+  { to: "/alertas", label: "Alertas", icon: BellRing, visible: always },
   { to: "/atrasados", label: "Mensalidades em atraso", icon: AlarmClock, visible: always },
   {
     to: "/novo-workspace",

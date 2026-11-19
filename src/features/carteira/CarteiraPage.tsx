@@ -31,6 +31,19 @@ function channelsText(c: PortfolioCompany) {
     : formatInt(total);
 }
 
+/** Saúde do cliente: 100 = nenhum alerta. Some quando o servidor não manda (versão anterior). */
+function HealthCell({ c }: { c: PortfolioCompany }) {
+  if (!c.health) return <span className="text-muted-foreground">–</span>;
+  const { score, alerts, danger } = c.health;
+  const tone = danger > 0 ? "danger" : alerts > 0 ? "warning" : "success";
+  return (
+    <Badge tone={tone}>
+      {alerts === 0 ? "Sem alertas" : `${formatInt(alerts)} ${alerts === 1 ? "alerta" : "alertas"}`}
+      <span className="sr-only"> · saúde {score} de 100</span>
+    </Badge>
+  );
+}
+
 /** Passos iniciais do plano feitos pelo cliente (implantação). */
 function onboardingText(c: PortfolioCompany) {
   if (!c.onboarding) return "–";
@@ -53,6 +66,7 @@ function CompanyList({ companies }: { companies: PortfolioCompany[] }) {
             <tr className="border-b">
               <th className="px-4 py-3 font-medium">Cliente</th>
               <th className="px-4 py-3 font-medium">Situação</th>
+              <th className="px-4 py-3 font-medium">Saúde</th>
               <th className="px-4 py-3 text-right font-medium">Implantação</th>
               <th className="px-4 py-3 text-right font-medium">Usuários</th>
               <th className="px-4 py-3 text-right font-medium">Canais</th>
@@ -73,6 +87,9 @@ function CompanyList({ companies }: { companies: PortfolioCompany[] }) {
                 </td>
                 <td className="px-4 py-3">
                   <StatusCell status={c.plan.status} />
+                </td>
+                <td className="px-4 py-3">
+                  <HealthCell c={c} />
                 </td>
                 <td className="px-4 py-3 text-right tabular-nums">{onboardingText(c)}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{usersText(c)}</td>
@@ -95,7 +112,10 @@ function CompanyList({ companies }: { companies: PortfolioCompany[] }) {
             <Link to={clientPath(c.id)} className="surface block p-4 active:bg-muted">
               <div className="flex items-start justify-between gap-3">
                 <span className="font-medium">{c.name}</span>
-                <StatusCell status={c.plan.status} />
+                <span className="flex flex-wrap justify-end gap-1">
+                  <StatusCell status={c.plan.status} />
+                  <HealthCell c={c} />
+                </span>
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                 <dt className="text-muted-foreground">Implantação</dt>
@@ -123,8 +143,14 @@ export function CarteiraPage() {
 
   const query = useQuery({
     queryKey: ["portfolio", term, page],
+    // pior saúde primeiro: quem tem alerta grave aparece no topo
     queryFn: () =>
-      partnersApi.portfolio({ search: term, limit: PAGE_SIZE, offset: page * PAGE_SIZE }),
+      partnersApi.portfolio({
+        search: term,
+        limit: PAGE_SIZE,
+        offset: page * PAGE_SIZE,
+        sort: "health",
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -137,7 +163,7 @@ export function CarteiraPage() {
       <PageHeader title="Carteira">
         {panel.kind === "ag3"
           ? "Clientes diretos da AG3, sem parceiro. Os clientes dos parceiros ficam na carteira de cada parceiro; os atrasados de todos aparecem em Mensalidades em atraso."
-          : "Os seus clientes, com o uso deste mês. Abra um cliente para ver o histórico, os usuários e a situação."}
+          : "Os seus clientes, com o uso deste mês, os com alertas primeiro. Abra um cliente para ver os alertas, o histórico, os usuários e a situação."}
       </PageHeader>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
