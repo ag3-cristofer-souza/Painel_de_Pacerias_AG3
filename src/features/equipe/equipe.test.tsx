@@ -83,6 +83,29 @@ describe("novo workspace", () => {
     expect(await screen.findByText("Clientes no contrato: 4 de 10.")).toBeInTheDocument();
   });
 
+  it("escolhe o plano entre os do contrato, com o primeiro marcado", async () => {
+    vi.mocked(partnersApi.me).mockResolvedValue(
+      partnerPanel({
+        allowed_plans: [
+          { key: "essentials", name: "Essentials" },
+          { key: "pro", name: "Pro" },
+        ],
+      })
+    );
+    vi.mocked(workspaceApi.create).mockRejectedValue(new ApiError(422, "teste"));
+    renderApp("/novo-workspace");
+    const user = userEvent.setup();
+    expect(await screen.findByLabelText("Essentials")).toBeChecked();
+    await user.click(screen.getByLabelText("Pro"));
+    await user.type(screen.getByLabelText("Nome da empresa"), "Loja");
+    await user.type(screen.getByLabelText("Nome"), "Carla");
+    await user.type(screen.getByLabelText("E-mail"), "carla@loja.com");
+    await user.click(screen.getByRole("button", { name: "Criar workspace e enviar convite" }));
+    await waitFor(() =>
+      expect(workspaceApi.create).toHaveBeenCalledWith(expect.objectContaining({ plan_key: "pro" }))
+    );
+  });
+
   it("contrato cheio: explica em vez de mostrar o formulário", async () => {
     vi.mocked(partnersApi.me).mockResolvedValue(
       partnerPanel({

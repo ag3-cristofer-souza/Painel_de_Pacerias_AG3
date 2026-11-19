@@ -18,6 +18,8 @@ const panelSchema = z.object({
   member_role: z.string().optional(),
   support_level: z.string().optional(),
   can_admin_workspaces: z.boolean(),
+  /** Planos que o contrato do parceiro permite dar aos clientes (só parceiro). */
+  allowed_plans: z.array(z.object({ key: z.string(), name: z.string() })).optional(),
 });
 
 /** Quem está no painel e em nome de quem: um parceiro (com o papel) ou a equipe AG3 (com o nível). */
@@ -35,6 +37,8 @@ const usageSchema = z.object({
 });
 
 const planSchema = z.object({
+  /** Plano do catálogo (`essentials`, `pro`…); `name` é o nome dele. */
+  key: z.string().optional(),
   name: z.string().optional(),
   status: z.string().optional(),
   users_limit: z.number().optional(),
@@ -47,6 +51,8 @@ const portfolioCompanySchema = z.object({
   created_at: z.string(),
   plan: planSchema,
   usage: usageSchema,
+  /** Passos iniciais do plano já feitos pelo cliente (implantação). Ausente se o servidor não conseguiu contar. */
+  onboarding: z.object({ done: z.number(), total: z.number() }).optional(),
 });
 
 const companyDetailSchema = portfolioCompanySchema.extend({
@@ -113,6 +119,16 @@ export const partnersApi = {
       )
     ).data;
   },
+
+  /** Troca o plano do cliente por outro do contrato (dono ou admin do parceiro). Fica no histórico da empresa. */
+  setCompanyPlan: async (id: string, planKey: string): Promise<PortfolioCompany> =>
+    (
+      await api.patch(
+        `/partners/companies/${encodeURIComponent(id)}`,
+        z.object({ data: portfolioCompanySchema }),
+        { plan_key: planKey }
+      )
+    ).data,
 };
 
 // ── novo workspace e equipe do parceiro ──
@@ -134,6 +150,8 @@ export interface WorkspaceInput {
   cnpj?: string;
   admin_name: string;
   admin_email: string;
+  /** Um dos `allowed_plans` do painel; sem ele, o servidor usa o primeiro do contrato. */
+  plan_key?: string;
 }
 
 export const workspaceApi = {
@@ -145,6 +163,7 @@ export const workspaceApi = {
       admin_email: input.admin_email.trim().toLowerCase(),
     };
     if (input.cnpj?.trim()) body.cnpj = input.cnpj.trim();
+    if (input.plan_key) body.plan_key = input.plan_key;
     return (await api.post("/partners/companies", z.object({ data: portfolioCompanySchema }), body))
       .data;
   },

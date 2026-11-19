@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, PauseCircle, PlayCircle } from "lucide-react";
+import { ArrowLeft, Layers, Loader2, PauseCircle, PlayCircle } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
@@ -167,6 +167,100 @@ function Users({ company }: { company: CompanyDetail }) {
   );
 }
 
+/**
+ * O plano do cliente (D16, B.7): o dono ou administrador do parceiro troca por outro do contrato. A troca vale na hora e
+ * fica no histórico da empresa.
+ */
+function PlanActions({ company }: { company: CompanyDetail }) {
+  const panel = usePanel();
+  const client = useQueryClient();
+  const options = panel.allowed_plans ?? [];
+  const current = company.plan.key;
+  const [chosen, setChosen] = useState("");
+  const mutation = useMutation({
+    mutationFn: () => partnersApi.setCompanyPlan(company.id, chosen),
+    onSuccess: async () => {
+      setChosen("");
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ["company", company.id] }),
+        client.invalidateQueries({ queryKey: ["portfolio"] }),
+      ]);
+    },
+  });
+  const others = options.filter((option) => option.key !== current);
+  const outside = !!current && !options.some((option) => option.key === current);
+
+  return (
+    <div className="space-y-3 text-sm">
+      <p>
+        Plano atual: <strong>{company.plan.name ?? "não informado"}</strong>
+        {company.onboarding &&
+          ` · ${formatInt(company.onboarding.done)} de ${formatInt(company.onboarding.total)} passos iniciais feitos`}
+      </p>
+      {!panel.can_admin_workspaces ? (
+        <p className="text-muted-foreground">
+          {panel.kind === "ag3"
+            ? "O plano dos clientes diretos é trocado pela equipe AG3 no Django Admin."
+            : "Só o dono ou um administrador do parceiro troca o plano do cliente."}
+        </p>
+      ) : others.length === 0 ? (
+        <p className="text-muted-foreground">
+          O seu contrato não tem outro plano para este cliente. Para liberar mais planos, fale com a
+          AG3.
+        </p>
+      ) : (
+        <form
+          className="space-y-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate();
+          }}
+        >
+          {outside && (
+            <p className="text-muted-foreground">
+              O plano atual não está no seu contrato: se trocar, não dá para voltar a ele pelo
+              painel.
+            </p>
+          )}
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Novo plano">
+            {others.map((option) => (
+              <label
+                key={option.key}
+                className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-4 has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:font-semibold"
+              >
+                <input
+                  type="radio"
+                  name="novo-plano"
+                  value={option.key}
+                  checked={chosen === option.key}
+                  onChange={() => {
+                    mutation.reset();
+                    setChosen(option.key);
+                  }}
+                  className="accent-primary"
+                />
+                {option.name}
+              </label>
+            ))}
+          </div>
+          {chosen && (
+            <p className="text-muted-foreground">
+              A troca vale na hora: as telas e os limites do cliente passam a ser os do plano novo.
+              Nada é apagado; o que ficar fora do plano só deixa de aparecer. Fica no histórico da
+              empresa, com o seu nome.
+            </p>
+          )}
+          <ErrorText>{mutation.error?.message}</ErrorText>
+          <Button type="submit" loading={mutation.isPending} disabled={!chosen}>
+            <Layers aria-hidden="true" />
+            Trocar plano
+          </Button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 /** Suspender ou reativar à mão. Quem pode: dono ou administrador do parceiro (a equipe AG3 usa o Django Admin). */
 function StatusActions({ company }: { company: CompanyDetail }) {
   const panel = usePanel();
@@ -330,6 +424,9 @@ export function ClientePage() {
 
       <div className="space-y-4">
         <UsageNow company={company} />
+        <Section title="Plano">
+          <PlanActions company={company} />
+        </Section>
         <Section title="Situação">
           <StatusActions company={company} />
         </Section>

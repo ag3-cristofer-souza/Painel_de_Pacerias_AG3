@@ -21,7 +21,13 @@ vi.mock("@/api/billing", () => ({
   },
 }));
 vi.mock("@/api/partners", () => ({
-  partnersApi: { me: vi.fn(), portfolio: vi.fn(), company: vi.fn(), setCompanyStatus: vi.fn() },
+  partnersApi: {
+    me: vi.fn(),
+    portfolio: vi.fn(),
+    company: vi.fn(),
+    setCompanyStatus: vi.fn(),
+    setCompanyPlan: vi.fn(),
+  },
 }));
 
 const usage = {
@@ -59,6 +65,7 @@ beforeEach(() => {
     .mockResolvedValue({ data: [loja()], count: 1 });
   vi.mocked(partnersApi.company).mockReset().mockResolvedValue(detalhe());
   vi.mocked(partnersApi.setCompanyStatus).mockReset();
+  vi.mocked(partnersApi.setCompanyPlan).mockReset();
   setToken("ag3s_teste");
 });
 
@@ -85,6 +92,23 @@ describe("carteira", () => {
       limit: 50,
       offset: 0,
     });
+  });
+
+  it("mostra a implantação de cada cliente", async () => {
+    vi.mocked(partnersApi.portfolio).mockResolvedValue({
+      data: [
+        loja({ onboarding: { done: 3, total: 8 } }),
+        loja({ id: "c2", name: "Loja Verde", onboarding: { done: 5, total: 5 } }),
+        loja({ id: "c3", name: "Loja Roxa" }),
+      ],
+      count: 3,
+    });
+    renderApp("/");
+    const table = await screen.findByRole("table");
+    expect(within(table).getByRole("columnheader", { name: "Implantação" })).toBeInTheDocument();
+    expect(within(table).getByRole("row", { name: /Loja Azul/ })).toHaveTextContent("3 de 8");
+    expect(within(table).getByRole("row", { name: /Loja Verde/ })).toHaveTextContent("Concluída");
+    expect(within(table).getByRole("row", { name: /Loja Roxa/ })).toHaveTextContent("–");
   });
 
   it("equipe AG3 vê a explicação dos clientes diretos", async () => {
@@ -163,6 +187,44 @@ describe("cliente", () => {
       )
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Suspender cliente" })).not.toBeInTheDocument();
+  });
+
+  it("dono troca o plano por outro do contrato, com a explicação antes", async () => {
+    const planos = [
+      { key: "essentials", name: "Essentials" },
+      { key: "pro", name: "Pro" },
+      { key: "plus", name: "Plus" },
+    ];
+    vi.mocked(partnersApi.me).mockResolvedValue(partnerPanel({ allowed_plans: planos }));
+    vi.mocked(partnersApi.company).mockResolvedValue(
+      detalhe({
+        plan: { key: "pro", name: "Pro", status: "active" },
+        onboarding: { done: 2, total: 7 },
+      })
+    );
+    vi.mocked(partnersApi.setCompanyPlan).mockResolvedValue(loja());
+    renderApp("/clientes/c1");
+    const user = userEvent.setup();
+    expect(await screen.findByText(/2 de 7 passos iniciais feitos/)).toBeInTheDocument();
+    const grupo = screen.getByRole("radiogroup", { name: "Novo plano" });
+    expect(within(grupo).queryByLabelText("Pro")).not.toBeInTheDocument(); // o atual não é opção
+    const trocar = screen.getByRole("button", { name: "Trocar plano" });
+    expect(trocar).toBeDisabled();
+    await user.click(within(grupo).getByLabelText("Plus"));
+    expect(screen.getByText(/A troca vale na hora/)).toBeInTheDocument();
+    await user.click(trocar);
+    await waitFor(() => expect(partnersApi.setCompanyPlan).toHaveBeenCalledWith("c1", "plus"));
+  });
+
+  it("equipe AG3 e quem não administra não trocam o plano", async () => {
+    vi.mocked(partnersApi.me).mockResolvedValue(staffPanel());
+    renderApp("/clientes/c1");
+    expect(
+      await screen.findByText(
+        "O plano dos clientes diretos é trocado pela equipe AG3 no Django Admin."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Trocar plano" })).not.toBeInTheDocument();
   });
 
   it("cliente fora da carteira", async () => {

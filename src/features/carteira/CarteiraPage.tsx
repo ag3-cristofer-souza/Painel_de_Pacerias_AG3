@@ -31,6 +31,13 @@ function channelsText(c: PortfolioCompany) {
     : formatInt(total);
 }
 
+/** Passos iniciais do plano feitos pelo cliente (implantação). */
+function onboardingText(c: PortfolioCompany) {
+  if (!c.onboarding) return "–";
+  const { done, total } = c.onboarding;
+  return done >= total ? "Concluída" : `${formatInt(done)} de ${formatInt(total)}`;
+}
+
 function StatusCell({ status }: { status?: string }) {
   const s = planStatus(status);
   return <Badge tone={s.tone}>{s.label}</Badge>;
@@ -46,6 +53,7 @@ function CompanyList({ companies }: { companies: PortfolioCompany[] }) {
             <tr className="border-b">
               <th className="px-4 py-3 font-medium">Cliente</th>
               <th className="px-4 py-3 font-medium">Situação</th>
+              <th className="px-4 py-3 text-right font-medium">Implantação</th>
               <th className="px-4 py-3 text-right font-medium">Usuários</th>
               <th className="px-4 py-3 text-right font-medium">Canais</th>
               <th className="px-4 py-3 text-right font-medium">Conversas no mês</th>
@@ -66,6 +74,7 @@ function CompanyList({ companies }: { companies: PortfolioCompany[] }) {
                 <td className="px-4 py-3">
                   <StatusCell status={c.plan.status} />
                 </td>
+                <td className="px-4 py-3 text-right tabular-nums">{onboardingText(c)}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{usersText(c)}</td>
                 <td className="px-4 py-3 text-right tabular-nums">{channelsText(c)}</td>
                 <td className="px-4 py-3 text-right tabular-nums">
@@ -89,6 +98,8 @@ function CompanyList({ companies }: { companies: PortfolioCompany[] }) {
                 <StatusCell status={c.plan.status} />
               </div>
               <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                <dt className="text-muted-foreground">Implantação</dt>
+                <dd className="text-right tabular-nums">{onboardingText(c)}</dd>
                 <dt className="text-muted-foreground">Usuários</dt>
                 <dd className="text-right tabular-nums">{usersText(c)}</dd>
                 <dt className="text-muted-foreground">Canais</dt>

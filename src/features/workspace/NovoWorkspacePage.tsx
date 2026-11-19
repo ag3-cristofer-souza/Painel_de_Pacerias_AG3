@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, CheckCircle2, Mail, UserRound } from "lucide-react";
+import { Building2, CheckCircle2, Layers, Mail, UserRound } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { workspaceApi, type PortfolioCompany, type WorkspaceInput } from "@/api/partners";
@@ -59,12 +59,14 @@ export function NovoWorkspacePage() {
   const [created, setCreated] = useState<{ company: PortfolioCompany; email: string } | null>(null);
 
   const partner = panel.partner;
+  const plans = panel.allowed_plans ?? [];
+  const plan = form.plan_key ?? plans[0]?.key;
   const max = partner?.max_workspaces;
   const used = partner?.workspaces_used ?? 0;
   const full = max !== undefined && used >= max;
 
   const mutation = useMutation({
-    mutationFn: () => workspaceApi.create(form),
+    mutationFn: () => workspaceApi.create(plan ? { ...form, plan_key: plan } : form),
     onSuccess: async (company) => {
       setCreated({ company, email: form.admin_email.trim().toLowerCase() });
       setForm(EMPTY);
@@ -136,6 +138,35 @@ export function NovoWorkspacePage() {
               inputMode="numeric"
             />
           </fieldset>
+          {plans.length > 0 && (
+            <fieldset className="space-y-2">
+              <legend className="mb-1 flex items-center gap-2 text-sm font-semibold">
+                <Layers className="size-4" aria-hidden="true" />O plano
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {plans.map((option) => (
+                  <label
+                    key={option.key}
+                    className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border px-4 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:checked]:font-semibold"
+                  >
+                    <input
+                      type="radio"
+                      name="plano"
+                      value={option.key}
+                      checked={plan === option.key}
+                      onChange={() => setForm((f) => ({ ...f, plan_key: option.key }))}
+                      className="accent-primary"
+                    />
+                    {option.name}
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Os planos que o seu contrato permite. O plano decide as telas e os limites do
+                cliente, e dá para trocar depois na tela dele.
+              </p>
+            </fieldset>
+          )}
           <fieldset className="space-y-3">
             <legend className="mb-1 flex items-center gap-2 text-sm font-semibold">
               <UserRound className="size-4" aria-hidden="true" />O primeiro administrador
