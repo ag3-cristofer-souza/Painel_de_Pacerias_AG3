@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { AlertasPage } from "@/features/alertas/AlertasPage";
+import { ConfigurarAlertasPage } from "@/features/alertas/ConfigurarAlertasPage";
 import { AtrasadosPage } from "@/features/atrasados/AtrasadosPage";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { LoginPage } from "@/features/auth/LoginPage";
@@ -36,6 +37,7 @@ export function AppRoutes() {
             <Route index element={<CarteiraPage />} />
             <Route path="/clientes/:id" element={<ClientePage />} />
             <Route path="/alertas" element={<AlertasPage />} />
+            <Route path="/alertas/configurar" element={<ConfigurarAlertasPage />} />
             <Route path="/atrasados" element={<AtrasadosPage />} />
             <Route path="/mensalidade/:id" element={<MensalidadePage />} />
             <Route path="/novo-workspace" element={<NovoWorkspacePage />} />

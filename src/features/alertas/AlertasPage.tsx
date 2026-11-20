@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { alertsApi } from "@/api/partners";
 import { usePanel } from "@/features/auth/AuthProvider";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,14 @@ export function AlertasPage() {
           ? "Problemas nos clientes diretos, os mais graves primeiro. A verificação roda a cada 10 minutos e o alerta some sozinho quando o problema acaba."
           : "Problemas nos seus clientes, os mais graves primeiro: canal desconectado, fila parada, queda de uso, implantação incompleta e outros. A verificação roda a cada 10 minutos e o alerta some sozinho quando o problema acaba."}
       </PageHeader>
+
+      <Link
+        to="/alertas/configurar"
+        className="mb-4 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary"
+      >
+        <SlidersHorizontal className="size-4" aria-hidden="true" />
+        Configurar alertas
+      </Link>
 
       <div role="tablist" aria-label="Situação dos alertas" className="mb-4 flex gap-2">
         {TABS.map((tab) => (

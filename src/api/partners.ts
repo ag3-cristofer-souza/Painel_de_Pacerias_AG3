@@ -66,6 +66,41 @@ const alertSchema = z.object({
 /** Pontuação de 0 a 100 (100 = nada aberto) e os alertas ativos do cliente. */
 const healthSchema = z.object({ score: z.number(), alerts: z.number(), danger: z.number() });
 
+// ── limites dos alertas (`/partners/alert-settings`, 6c) ──
+const alertLimitSchema = z.object({
+  key: z.string(),
+  kind: z.string(),
+  kind_label: z.string(),
+  label: z.string(),
+  unit: z.string(),
+  value: z.number(),
+  default: z.number(),
+  min: z.number(),
+  max: z.number(),
+});
+const alertSettingsSchema = z.object({
+  /** Dono e admin do parceiro mudam; os demais (e a equipe AG3, com os padrões) só leem. */
+  editable: z.boolean(),
+  limits: z.array(alertLimitSchema),
+  kinds: z.array(
+    z.object({
+      kind: z.string(),
+      label: z.string(),
+      enabled: z.boolean(),
+      can_disable: z.boolean(),
+    })
+  ),
+});
+
+export type AlertLimit = z.infer<typeof alertLimitSchema>;
+export type AlertSettings = z.infer<typeof alertSettingsSchema>;
+export interface AlertSettingsInput {
+  /** Só os que mudaram; o resto fica como está. */
+  limits?: Record<string, number>;
+  /** A lista inteira dos tipos desligados. */
+  disabled?: string[];
+}
+
 export type Alert = z.infer<typeof alertSchema>;
 export type Health = z.infer<typeof healthSchema>;
 
@@ -245,6 +280,14 @@ export const alertsApi = {
       params
     );
   },
+
+  /** Limites e tipos ligados, para todos os clientes do parceiro. */
+  settings: async (): Promise<AlertSettings> =>
+    (await api.get("/partners/alert-settings", z.object({ data: alertSettingsSchema }))).data,
+
+  saveSettings: async (input: AlertSettingsInput): Promise<AlertSettings> =>
+    (await api.patch("/partners/alert-settings", z.object({ data: alertSettingsSchema }), input))
+      .data,
 
   /** "Já vi": continua na lista até o problema acabar, com peso menor na saúde. */
   acknowledge: async (id: string): Promise<Alert> =>
