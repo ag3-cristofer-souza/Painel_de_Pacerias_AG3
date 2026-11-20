@@ -1,9 +1,9 @@
 import { LogOut } from "lucide-react";
 import { Navigate, NavLink, Outlet, useLocation } from "react-router-dom";
-import logoBranco from "@/assets/logo-branco.png";
 import { panelOwnerName, panelRoleLabel } from "@/lib/roles";
 import { cn } from "@/lib/utils";
 import { useAuth, usePanel } from "@/features/auth/AuthProvider";
+import { BrandLogo } from "@/ui/brand";
 import { canSee, visibleNav } from "./navigation";
 
 /** Menu lateral no computador; no celular, vira uma faixa rolável no topo. */
@@ -15,7 +15,7 @@ export function AppShell() {
     <div className="min-h-dvh bg-background lg:flex">
       <aside className="dark bg-background text-foreground lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex items-center justify-between gap-3 px-5 py-4 lg:py-6">
-          <img src={logoBranco} alt="AG3.AI" width={112} height={26} />
+          <BrandLogo width={112} height={26} />
           <button
             type="button"
             onClick={signOut}

@@ -8,6 +8,7 @@ import { Button } from "@/ui/button";
 import { ErrorText } from "@/ui/feedback";
 import { Field } from "@/ui/field";
 import { useAuth } from "./AuthProvider";
+import { useBrand } from "@/features/marca/brand";
 
 const messageOf = (error: unknown) =>
   error instanceof ApiError ? error.detail : "Algo deu errado. Tente de novo.";
@@ -85,6 +86,7 @@ function StepTitle({
 
 function PasswordStep({ email, onEmail, notice, onChallenge, onForgot }: PasswordStepProps) {
   const { completeLogin } = useAuth();
+  const brand = useBrand();
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(notice ?? "");
@@ -108,8 +110,10 @@ function PasswordStep({ email, onEmail, notice, onChallenge, onForgot }: Passwor
   return (
     <form onSubmit={submit}>
       <StepTitle title="Entrar no painel">
-        Use a conta de parceiro ou da equipe de suporte da AG3. Depois da senha, pedimos um código
-        enviado por e-mail.
+        {brand.is_default
+          ? "Use a conta de parceiro ou da equipe de suporte da AG3."
+          : `Use a sua conta da equipe ${brand.product_name}.`}{" "}
+        Depois da senha, pedimos um código enviado por e-mail.
       </StepTitle>
       <div className="space-y-4">
         <Field

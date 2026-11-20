@@ -1,6 +1,7 @@
 import { Building2, LifeBuoy, ReceiptText, ShieldCheck } from "lucide-react";
 import { useEffect, type ReactNode } from "react";
 import logoBranco from "@/assets/logo-branco.png";
+import { useBrand } from "@/features/marca/brand";
 import { cn } from "@/lib/utils";
 
 const BRAND_COLOR = "#12224e";
@@ -16,6 +17,21 @@ function useBrandStatusBar(): void {
       meta.content = previous;
     };
   }, []);
+}
+
+/** Logo para fundo escuro: o do parceiro no endereço dele (white label), senão o da AG3. Sem logo, o nome do produto. */
+export function BrandLogo({ width, height }: { width: number; height: number }) {
+  const brand = useBrand();
+  if (brand.is_default) return <img src={logoBranco} alt="AG3.AI" width={width} height={height} />;
+  if (brand.logo_dark)
+    return (
+      <img
+        src={brand.logo_dark}
+        alt={brand.product_name}
+        style={{ height, width: "auto", maxWidth: width * 1.6 }}
+      />
+    );
+  return <span className="text-lg font-semibold text-white">{brand.product_name}</span>;
 }
 
 /** Selo do produto: "Painel de Parcerias" com a marca AG3. */
@@ -128,10 +144,11 @@ const PILLARS = [
 
 /** Lado da marca (computador): azul-marinho da AG3, com cara de central de atendimento. */
 function PartnerHero() {
+  const brand = useBrand();
   return (
     <aside className="partner-hero relative hidden overflow-hidden text-white lg:flex lg:flex-col lg:justify-between lg:gap-10 lg:p-10 xl:p-14">
       <div className="flex items-center gap-4">
-        <img src={logoBranco} alt="AG3.AI" width={132} height={30} />
+        <BrandLogo width={132} height={30} />
         <span className="h-6 w-px bg-white/20" aria-hidden="true" />
         <ProductTag className="border-white/15 bg-white/[0.06] text-white/80" />
       </div>
@@ -142,8 +159,9 @@ function PartnerHero() {
             Seus clientes, os chamados e as mensalidades num só lugar.
           </h2>
           <p className="max-w-lg text-base text-white/70">
-            O painel de quem implanta, atende e acompanha os clientes: parceiros e a equipe de
-            suporte da AG3, cada um com o seu nível de acesso.
+            {brand.is_default
+              ? "O painel de quem implanta, atende e acompanha os clientes: parceiros e a equipe de suporte da AG3, cada um com o seu nível de acesso."
+              : "O painel de quem implanta, atende e acompanha os clientes, cada um com o seu nível de acesso."}
           </p>
         </div>
         <ConsolePreview />
@@ -161,7 +179,9 @@ function PartnerHero() {
         </ul>
         <p className="flex items-center gap-2 text-xs text-white/55">
           <ShieldCheck className="size-4 text-emerald-300" aria-hidden="true" />
-          Acesso só para parceiros e equipe de suporte, com código por e-mail em toda entrada.
+          {brand.is_default
+            ? "Acesso só para parceiros e equipe de suporte, com código por e-mail em toda entrada."
+            : "Acesso só para a equipe, com código por e-mail em toda entrada."}
         </p>
       </div>
     </aside>
@@ -174,19 +194,22 @@ function PartnerHero() {
  */
 export function AuthLayout({ children }: { children: ReactNode }) {
   useBrandStatusBar();
+  const brand = useBrand();
   return (
     <div className="min-h-dvh bg-background lg:grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
       <PartnerHero />
       <div className="flex min-h-dvh flex-col">
         <header className="partner-hero flex items-center justify-between gap-3 px-5 py-4 text-white lg:hidden">
-          <img src={logoBranco} alt="AG3.AI" width={104} height={24} />
+          <BrandLogo width={104} height={24} />
           <ProductTag className="border-white/15 bg-white/[0.06] text-white/80" />
         </header>
         <main className="flex flex-1 items-center justify-center px-5 py-10 sm:px-8">
           <div className="w-full max-w-[400px]">{children}</div>
         </main>
         <footer className="px-5 pb-6 text-center text-xs text-muted-foreground sm:px-8">
-          Problemas para entrar? Fale com o seu contato na AG3.
+          {brand.is_default
+            ? "Problemas para entrar? Fale com o seu contato na AG3."
+            : "Problemas para entrar? Fale com quem administra a sua equipe."}
         </footer>
       </div>
     </div>

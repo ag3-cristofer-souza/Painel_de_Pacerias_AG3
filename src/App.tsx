@@ -6,6 +6,8 @@ import { ConfigurarAlertasPage } from "@/features/alertas/ConfigurarAlertasPage"
 import { AtrasadosPage } from "@/features/atrasados/AtrasadosPage";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { LoginPage } from "@/features/auth/LoginPage";
+import { BrandProvider } from "@/features/marca/BrandProvider";
+import { MarcaPage } from "@/features/marca/MarcaPage";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { CarteiraPage } from "@/features/carteira/CarteiraPage";
 import { ClientePage } from "@/features/carteira/ClientePage";
@@ -42,6 +44,7 @@ export function AppRoutes() {
             <Route path="/mensalidade/:id" element={<MensalidadePage />} />
             <Route path="/novo-workspace" element={<NovoWorkspacePage />} />
             <Route path="/equipe" element={<EquipePage />} />
+            <Route path="/marca" element={<MarcaPage />} />
             <Route path="/conta" element={<ContaPage />} />
           </Route>
         </Route>
@@ -55,9 +58,11 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <BrandProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </BrandProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );

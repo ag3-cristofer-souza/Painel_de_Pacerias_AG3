@@ -3,6 +3,7 @@ import {
   BellRing,
   Building2,
   CirclePlus,
+  Palette,
   UserRound,
   Users,
   type LucideIcon,
@@ -30,6 +31,7 @@ export const NAV_ITEMS: NavItem[] = [
     visible: (p) => p.can_admin_workspaces,
   },
   { to: "/equipe", label: "Equipe", icon: Users, visible: (p) => p.kind === "partner" },
+  { to: "/marca", label: "Marca", icon: Palette, visible: (p) => p.kind === "partner" },
   { to: "/conta", label: "Minha conta", icon: UserRound, visible: always },
 ];
 

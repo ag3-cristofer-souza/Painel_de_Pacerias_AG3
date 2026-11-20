@@ -12,6 +12,7 @@ describe("menu por quem está no painel", () => {
       "Mensalidades em atraso",
       "Novo workspace",
       "Equipe",
+      "Marca",
       "Minha conta",
     ]);
   });
@@ -30,5 +31,6 @@ describe("menu por quem está no painel", () => {
       "Minha conta",
     ]);
     expect(canSee(staffPanel(), "/equipe")).toBe(false);
+    expect(canSee(staffPanel(), "/marca")).toBe(false);
   });
 });
