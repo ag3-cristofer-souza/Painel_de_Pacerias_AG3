@@ -8,6 +8,7 @@ import { AuthProvider } from "@/features/auth/AuthProvider";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { BrandProvider } from "@/features/marca/BrandProvider";
 import { MarcaPage } from "@/features/marca/MarcaPage";
+import { ArtigosPage } from "@/features/artigos/ArtigosPage";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { CarteiraPage } from "@/features/carteira/CarteiraPage";
 import { ClientePage } from "@/features/carteira/ClientePage";
@@ -45,6 +46,7 @@ export function AppRoutes() {
             <Route path="/novo-workspace" element={<NovoWorkspacePage />} />
             <Route path="/equipe" element={<EquipePage />} />
             <Route path="/marca" element={<MarcaPage />} />
+            <Route path="/artigos" element={<ArtigosPage />} />
             <Route path="/conta" element={<ContaPage />} />
           </Route>
         </Route>

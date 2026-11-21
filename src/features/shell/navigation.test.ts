@@ -13,6 +13,7 @@ describe("menu por quem está no painel", () => {
       "Novo workspace",
       "Equipe",
       "Marca",
+      "Artigos de ajuda",
       "Minha conta",
     ]);
   });
@@ -28,6 +29,7 @@ describe("menu por quem está no painel", () => {
       "Carteira",
       "Alertas",
       "Mensalidades em atraso",
+      "Artigos de ajuda",
       "Minha conta",
     ]);
     expect(canSee(staffPanel(), "/equipe")).toBe(false);

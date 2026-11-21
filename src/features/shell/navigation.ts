@@ -1,6 +1,7 @@
 import {
   AlarmClock,
   BellRing,
+  BookOpen,
   Building2,
   CirclePlus,
   Palette,
@@ -32,6 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { to: "/equipe", label: "Equipe", icon: Users, visible: (p) => p.kind === "partner" },
   { to: "/marca", label: "Marca", icon: Palette, visible: (p) => p.kind === "partner" },
+  { to: "/artigos", label: "Artigos de ajuda", icon: BookOpen, visible: always },
   { to: "/conta", label: "Minha conta", icon: UserRound, visible: always },
 ];
 
