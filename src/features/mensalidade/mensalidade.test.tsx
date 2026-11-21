@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { billingApi, type BillingDetail, type BillingState } from "@/api/billing";
 import { partnersApi } from "@/api/partners";
+import { localIsoDate } from "@/lib/format";
 import { setToken } from "@/lib/session";
 import { partnerPanel, renderApp, staffPanel } from "@/test/render";
 
@@ -146,14 +147,16 @@ describe("mensalidade do cliente", () => {
     const submit = within(form).getByRole("button", { name: "Registrar acordo" });
     expect(submit).toBeDisabled();
 
-    await user.type(within(form).getByLabelText("Data prometida de pagamento"), "2026-11-20");
+    // data relativa a hoje: a data prometida não pode ficar no passado (o campo tem `min` = hoje)
+    const promised = localIsoDate(2);
+    await user.type(within(form).getByLabelText("Data prometida de pagamento"), promised);
     await user.type(within(form).getByLabelText("O que foi combinado"), "paga via Pix");
     await user.click(submit);
 
     await waitFor(() =>
       expect(billingApi.postpone).toHaveBeenCalledWith("c1", {
         kind: "agreement",
-        promised_date: "2026-11-20",
+        promised_date: promised,
         note: "paga via Pix",
       })
     );
