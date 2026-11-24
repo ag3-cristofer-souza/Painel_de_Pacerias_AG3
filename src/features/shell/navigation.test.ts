@@ -35,4 +35,11 @@ describe("menu por quem está no painel", () => {
     expect(canSee(staffPanel(), "/equipe")).toBe(false);
     expect(canSee(staffPanel(), "/marca")).toBe(false);
   });
+
+  it("admin global da AG3 cria cliente direto (adendo kh)", () => {
+    const chefe = staffPanel({ can_create_workspaces: true });
+    expect(labels(visibleNav(chefe))).toContain("Novo workspace");
+    expect(canSee(chefe, "/novo-workspace")).toBe(true);
+    expect(canSee(staffPanel({ can_create_workspaces: false }), "/novo-workspace")).toBe(false);
+  });
 });

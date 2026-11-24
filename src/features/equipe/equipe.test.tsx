@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "@/api/client";
 import { partnersApi, teamApi, workspaceApi, type Member } from "@/api/partners";
 import { setToken } from "@/lib/session";
-import { partnerPanel, renderApp } from "@/test/render";
+import { partnerPanel, renderApp, staffPanel } from "@/test/render";
 
 vi.mock("@/api/partners", () => ({
   partnersApi: { me: vi.fn() },
@@ -103,6 +103,34 @@ describe("novo workspace", () => {
     await user.click(screen.getByRole("button", { name: "Criar workspace e enviar convite" }));
     await waitFor(() =>
       expect(workspaceApi.create).toHaveBeenCalledWith(expect.objectContaining({ plan_key: "pro" }))
+    );
+  });
+
+  it("admin global da AG3 cria cliente direto com o catálogo (adendo kh)", async () => {
+    vi.mocked(partnersApi.me).mockResolvedValue(
+      staffPanel({
+        can_create_workspaces: true,
+        allowed_plans: [
+          { key: "essentials", name: "Essentials" },
+          { key: "pro", name: "Pro" },
+          { key: "enterprise", name: "Enterprise" },
+        ],
+      })
+    );
+    vi.mocked(workspaceApi.create).mockRejectedValue(new ApiError(422, "teste"));
+    renderApp("/novo-workspace");
+    const user = userEvent.setup();
+    expect(await screen.findByText(/cliente direto da AG3, sem parceiro/)).toBeInTheDocument();
+    expect(screen.queryByText(/Clientes no contrato/)).not.toBeInTheDocument();
+    await user.click(screen.getByLabelText("Enterprise"));
+    await user.type(screen.getByLabelText("Nome da empresa"), "Empresa Teste");
+    await user.type(screen.getByLabelText("Nome"), "Daniel");
+    await user.type(screen.getByLabelText("E-mail"), "teste@ag3.com");
+    await user.click(screen.getByRole("button", { name: "Criar workspace e enviar convite" }));
+    await waitFor(() =>
+      expect(workspaceApi.create).toHaveBeenCalledWith(
+        expect.objectContaining({ plan_key: "enterprise", name: "Empresa Teste" })
+      )
     );
   });
 

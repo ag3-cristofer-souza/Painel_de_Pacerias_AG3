@@ -59,6 +59,7 @@ export function NovoWorkspacePage() {
   const [created, setCreated] = useState<{ company: PortfolioCompany; email: string } | null>(null);
 
   const partner = panel.partner;
+  const direto = panel.kind === "ag3"; // admin global da AG3: cliente direto, sem parceiro (adendo kh)
   const plans = panel.allowed_plans ?? [];
   const plan = form.plan_key ?? plans[0]?.key;
   const max = partner?.max_workspaces;
@@ -88,9 +89,9 @@ export function NovoWorkspacePage() {
   return (
     <>
       <PageHeader title="Novo workspace">
-        Crie a empresa do seu cliente e convide o primeiro administrador dela. Os donos e
-        administradores do seu parceiro entram nesse workspace como administradores, sem ocupar vaga
-        do plano do cliente.
+        {direto
+          ? "Crie a empresa de um cliente direto da AG3, sem parceiro, e convide o primeiro administrador dela. Depois, pelo botão Entrar no workspace do cliente, você entra nele como administrador."
+          : "Crie a empresa do seu cliente e convide o primeiro administrador dela. Os donos e administradores do seu parceiro entram nesse workspace como administradores, sem ocupar vaga do plano do cliente."}
       </PageHeader>
 
       {max !== undefined && (
@@ -162,8 +163,9 @@ export function NovoWorkspacePage() {
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
-                Os planos que o seu contrato permite. O plano decide as telas e os limites do
-                cliente, e dá para trocar depois na tela dele.
+                {direto
+                  ? "O catálogo de planos. O plano decide as telas e os limites do cliente; a troca depois é pelo Django Admin ou pelo upgrade do próprio cliente."
+                  : "Os planos que o seu contrato permite. O plano decide as telas e os limites do cliente, e dá para trocar depois na tela dele."}
               </p>
             </fieldset>
           )}

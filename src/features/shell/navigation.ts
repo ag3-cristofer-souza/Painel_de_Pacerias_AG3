@@ -29,7 +29,8 @@ export const NAV_ITEMS: NavItem[] = [
     to: "/novo-workspace",
     label: "Novo workspace",
     icon: CirclePlus,
-    visible: (p) => p.can_admin_workspaces,
+    // servidor antigo não manda `can_create_workspaces`: vale o `can_admin_workspaces` de antes
+    visible: (p) => p.can_create_workspaces ?? p.can_admin_workspaces,
   },
   { to: "/equipe", label: "Equipe", icon: Users, visible: (p) => p.kind === "partner" },
   { to: "/marca", label: "Marca", icon: Palette, visible: (p) => p.kind === "partner" },

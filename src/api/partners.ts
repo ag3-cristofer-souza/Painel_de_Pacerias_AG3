@@ -18,7 +18,9 @@ const panelSchema = z.object({
   member_role: z.string().optional(),
   support_level: z.string().optional(),
   can_admin_workspaces: z.boolean(),
-  /** Planos que o contrato do parceiro permite dar aos clientes (só parceiro). */
+  /** "Novo workspace": dono/admin do parceiro ou admin global da AG3 (cliente direto, adendo kh). */
+  can_create_workspaces: z.boolean().optional(),
+  /** Planos que se pode dar ao cliente novo: os do contrato (parceiro) ou o catálogo (admin global da AG3). */
   allowed_plans: z.array(z.object({ key: z.string(), name: z.string() })).optional(),
 });
 

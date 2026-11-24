@@ -34,9 +34,10 @@ export const partnerPanel = (overrides: Partial<Panel> = {}): Panel => ({
   ...overrides,
 });
 
-export const staffPanel = (): Panel => ({
+export const staffPanel = (overrides: Partial<Panel> = {}): Panel => ({
   kind: "ag3",
   user: { id: "u9", email: "suporte@ag3system.com", full_name: "Suporte AG3" },
   support_level: "n2",
   can_admin_workspaces: false,
+  ...overrides,
 });
