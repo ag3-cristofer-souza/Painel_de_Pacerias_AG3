@@ -229,6 +229,21 @@ describe("cliente", () => {
     expect(screen.queryByRole("button", { name: "Trocar plano" })).not.toBeInTheDocument();
   });
 
+  it("entrar no workspace abre o painel do cliente já na empresa (adendo kf)", async () => {
+    const url = "https://app.ag3system.com/?workspace=c1";
+    vi.mocked(partnersApi.company).mockResolvedValue(detalhe({ enter_url: url }));
+    renderApp("/clientes/c1");
+    const link = await screen.findByRole("link", { name: /Entrar no workspace/ });
+    expect(link).toHaveAttribute("href", url);
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("sem enter_url (quem não entra como admin), sem botão", async () => {
+    renderApp("/clientes/c1");
+    expect(await screen.findByRole("heading", { name: "Loja Azul" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Entrar no workspace/ })).not.toBeInTheDocument();
+  });
+
   it("cliente fora da carteira", async () => {
     vi.mocked(partnersApi.company).mockRejectedValue(new ApiError(404, "Empresa não encontrada"));
     renderApp("/clientes/outro");

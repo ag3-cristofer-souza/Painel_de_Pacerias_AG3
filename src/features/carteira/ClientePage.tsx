@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Layers, Loader2, PauseCircle, PlayCircle } from "lucide-react";
+import { ArrowLeft, Layers, Loader2, LogIn, PauseCircle, PlayCircle } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
@@ -411,6 +411,17 @@ export function ClientePage() {
           {company.plan.name ? `Plano ${company.plan.name} · ` : ""}
           Cliente desde {formatDate(company.created_at)}
         </p>
+        {company.enter_url && (
+          <a
+            href={company.enter_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground"
+          >
+            <LogIn className="size-4" aria-hidden="true" />
+            Entrar no workspace
+          </a>
+        )}
       </div>
 
       {suspended && (

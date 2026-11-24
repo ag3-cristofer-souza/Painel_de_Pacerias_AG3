@@ -129,6 +129,8 @@ const companyDetailSchema = portfolioCompanySchema.extend({
   ),
   /** Alertas ativos do cliente (abertos e já vistos). */
   alerts: z.array(alertSchema).optional(),
+  /** Painel do cliente já nesta empresa ("Entrar no workspace"); só vem para quem entra nela como admin. */
+  enter_url: z.string().url().optional(),
 });
 
 export type Usage = z.infer<typeof usageSchema>;
