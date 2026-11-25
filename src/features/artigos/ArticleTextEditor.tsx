@@ -13,6 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useId, useRef, useState, type ClipboardEvent, type DragEvent } from "react";
+import { ApiError } from "@/api/client";
 import { helpApi } from "@/api/help";
 import { cn } from "@/lib/utils";
 import { ErrorText } from "@/ui/feedback";
@@ -80,7 +81,14 @@ export function ArticleTextEditor({
       commit(insertImage(ref.current?.value ?? value, s ?? 0, e ?? 0, url));
       setNotice("Imagem inserida. Para uma legenda, escreva entre os colchetes: ![Legenda](…).");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Não foi possível enviar a imagem.");
+      // 25/11: com o painel novo e o backend antigo, a rota não existia (404) e ninguém viu o aviso, que ficava
+      // embaixo do texto. Agora ele fica junto da barra, e o 404 diz o que é.
+      console.error("[artigos] envio da imagem falhou:", err);
+      setError(
+        err instanceof ApiError && err.status === 404
+          ? "O servidor ainda não aceita imagens nos artigos (atualização pendente). Avise o suporte e tente mais tarde."
+          : `A imagem não foi enviada: ${err instanceof Error && err.message ? err.message : "tente de novo."}`
+      );
     } finally {
       setUploading(false);
     }
@@ -202,6 +210,16 @@ export function ArticleTextEditor({
               />
             </div>
           )}
+          {error && (
+            <ErrorText className="rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-2">
+              {error}
+            </ErrorText>
+          )}
+          {notice && (
+            <p role="status" className="rounded-xl bg-muted px-3 py-2 text-xs">
+              {notice}
+            </p>
+          )}
           <textarea
             id={id}
             ref={ref}
@@ -221,12 +239,6 @@ export function ArticleTextEditor({
           <p className="text-xs text-muted-foreground">
             {value.length}/{MAX_BODY} · cole ou arraste uma imagem no texto para enviá-la
           </p>
-          {notice && (
-            <p role="status" className="text-xs">
-              {notice}
-            </p>
-          )}
-          <ErrorText>{error}</ErrorText>
         </div>
         <div
           className={cn(

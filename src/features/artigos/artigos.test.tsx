@@ -116,6 +116,27 @@ describe("Artigos de ajuda (onda 9)", () => {
     );
   });
 
+  it("envio de imagem que falha avisa junto da barra (25/11: 404 silencioso em produção)", async () => {
+    const { ApiError } = await import("@/api/client");
+    vi.mocked(helpApi.uploadImage)
+      .mockReset()
+      .mockRejectedValue(new ApiError(404, "Registro não encontrado"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const user = userEvent.setup();
+    renderApp("/artigos");
+    await user.click(await screen.findByRole("button", { name: /Novo artigo/ }));
+    const texto = screen.getByLabelText("Texto");
+    await user.type(texto, "Passo 1");
+    await user.upload(
+      screen.getByTestId("artigo-imagem"),
+      new File(["x"], "fig1.png", { type: "image/png" })
+    );
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /ainda não aceita imagens nos artigos/
+    );
+    expect(texto).toHaveValue("Passo 1"); // nada inserido, nada apagado
+  });
+
   it("quem só vê indicadores não escreve", async () => {
     vi.mocked(partnersApi.me).mockResolvedValue(
       partnerPanel({ member_role: "viewer", can_admin_workspaces: false })
