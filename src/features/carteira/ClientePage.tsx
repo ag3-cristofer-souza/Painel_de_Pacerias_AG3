@@ -6,6 +6,7 @@ import { ApiError } from "@/api/client";
 import { partnersApi, type CompanyDetail } from "@/api/partners";
 import { usePanel } from "@/features/auth/AuthProvider";
 import { AlertList } from "@/features/alertas/AlertList";
+import { AsaasPanel } from "@/features/asaas/AsaasPanel";
 import { BillingPanel } from "@/features/mensalidade/BillingPanel";
 import { formatCost, formatDate, formatInt, formatMinutes, formatMonth } from "@/lib/format";
 import {
@@ -357,6 +358,7 @@ function StatusActions({ company }: { company: CompanyDetail }) {
 
 export function ClientePage() {
   const { id = "" } = useParams();
+  const panel = usePanel();
   const query = useQuery({ queryKey: ["company", id], queryFn: () => partnersApi.company(id) });
 
   const back = (
@@ -450,6 +452,11 @@ export function ClientePage() {
         <Section title="Mensalidade">
           <BillingPanel companyId={company.id} />
         </Section>
+        {panel.kind === "ag3" && (
+          <Section title="Cobrança no Asaas" aside="Só a equipe AG3">
+            <AsaasPanel companyId={company.id} />
+          </Section>
+        )}
         <History company={company} />
         <Users company={company} />
       </div>
