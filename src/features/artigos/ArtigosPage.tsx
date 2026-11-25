@@ -6,8 +6,9 @@ import { usePanel } from "@/features/auth/AuthProvider";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { EmptyState, ErrorText } from "@/ui/feedback";
-import { Field, TextArea } from "@/ui/field";
+import { Field } from "@/ui/field";
 import { PageHeader } from "@/ui/page";
+import { ArticleTextEditor } from "./ArticleTextEditor";
 
 const EMPTY: ArticleInput = {
   title: "",
@@ -179,7 +180,7 @@ function Editor({
       {back}
       <PageHeader title={id ? (editable ? "Editar artigo" : draft.title) : "Novo artigo"}>
         {editable
-          ? "Linha em branco separa parágrafos; comece a linha com “## ” para um título e com “- ” para um item de lista."
+          ? "Use a barra do texto para títulos, listas, dicas, links e imagens. Ao lado (ou na aba “Ver como o cliente”), o artigo como o cliente vê."
           : "Artigo geral: aparece para os seus clientes também, mas só quem o escreveu altera."}
       </PageHeader>
       <form onSubmit={submit} className="surface space-y-4 p-5">
@@ -238,15 +239,10 @@ function Editor({
             Publicado
           </label>
         </div>
-        <TextArea
-          label="Texto"
-          required
-          rows={14}
-          maxLength={20000}
-          disabled={!editable}
+        <ArticleTextEditor
           value={draft.body}
-          onChange={(e) => set({ body: e.target.value })}
-          hint={`${draft.body.length}/20000`}
+          disabled={!editable}
+          onChange={(body) => set({ body })}
         />
         {save.isError && <ErrorText>{save.error.message}</ErrorText>}
         {remove.isError && <ErrorText>{remove.error.message}</ErrorText>}

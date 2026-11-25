@@ -24,6 +24,7 @@ const listSchema = z.object({
 });
 
 const one = z.object({ data: articleSchema });
+const imageSchema = z.object({ data: z.object({ url: z.string() }) });
 
 export type Article = z.infer<typeof articleSchema>;
 export type ArticleList = z.infer<typeof listSchema>;
@@ -45,6 +46,12 @@ export const helpApi = {
     (await api.post("/partners/help-articles", one, input)).data,
   update: async (id: string, input: Partial<ArticleInput>): Promise<Article> =>
     (await api.put(`/partners/help-articles/${id}`, one, input)).data,
+  /** Imagem do editor (adendo kp): PNG, JPEG, WebP ou GIF até 5 MB → URL pública para o texto. */
+  uploadImage: async (file: File): Promise<string> => {
+    const form = new FormData();
+    form.append("file", file);
+    return (await api.post("/partners/help-articles/images", imageSchema, form)).data.url;
+  },
   remove: async (id: string): Promise<void> => {
     await api.delete(`/partners/help-articles/${id}`, z.object({ deleted: z.boolean() }));
   },
