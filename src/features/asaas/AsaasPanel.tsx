@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { asaasApi, type AsaasOverview, type AsaasSubscription } from "@/api/asaas";
+import { asaasApi, type AsaasNfse, type AsaasOverview, type AsaasSubscription } from "@/api/asaas";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
@@ -35,6 +35,72 @@ const brl = (cents: number | null) =>
   cents === null
     ? "—"
     : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+
+const NOTA: Record<string, { label: string; tone: "neutral" | "success" | "warning" | "danger" }> =
+  {
+    REQUESTED: { label: "Pedida", tone: "warning" },
+    SCHEDULED: { label: "Agendada", tone: "warning" },
+    SYNCHRONIZED: { label: "Na prefeitura", tone: "warning" },
+    AUTHORIZED: { label: "Emitida", tone: "success" },
+    ERROR: { label: "Recusada", tone: "danger" },
+    PROCESSING_CANCELLATION: { label: "Cancelando", tone: "warning" },
+    CANCELED: { label: "Cancelada", tone: "neutral" },
+    CANCELLATION_DENIED: { label: "Cancelamento negado", tone: "danger" },
+    SKIPPED: { label: "Não emitida (estorno)", tone: "neutral" },
+  };
+
+/** Notas fiscais do cliente (B18, adendo ks): situação da emissão automática, endereço e uma linha por nota. */
+function NfseSection({ nfse }: { nfse: AsaasNfse }) {
+  const situacao =
+    nfse.state === "off"
+      ? "Emissão automática desligada."
+      : nfse.state === "incomplete"
+        ? `Emissão automática ligada, mas falta preencher no Admin: ${nfse.missing.join(", ")}.`
+        : "Emissão automática ligada: uma nota por pagamento confirmado.";
+  const f = nfse.fiscal;
+  return (
+    <div>
+      <h3 className="mb-2 text-sm font-semibold">Notas fiscais</h3>
+      <p className="text-sm text-muted-foreground">
+        {situacao}{" "}
+        {f.complete
+          ? `Endereço: CEP ${f.postal_code ?? ""}, nº ${f.address_number ?? ""}${f.complement ? `, ${f.complement}` : ""}.`
+          : f.required
+            ? "Sem endereço: o cliente precisa informar CEP e número antes de pagar."
+            : "Sem endereço informado."}
+      </p>
+      {nfse.invoices.length > 0 && (
+        <ul className="mt-2 space-y-1 text-sm">
+          {nfse.invoices.map((n) => {
+            const st = NOTA[n.status] ?? { label: n.status, tone: "neutral" as const };
+            return (
+              <li
+                key={n.external_id ?? n.payment ?? n.created_at}
+                className="flex flex-wrap items-center gap-x-2"
+              >
+                <span>{formatDateTime(n.created_at)}</span>
+                <span className="font-medium">{brl(n.value_cents)}</span>
+                <Badge tone={st.tone}>{st.label}</Badge>
+                {n.number && <span className="text-muted-foreground">nº {n.number}</span>}
+                {n.pdf_url && (
+                  <a
+                    href={n.pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline"
+                  >
+                    PDF <ExternalLink className="size-3.5" aria-hidden="true" />
+                  </a>
+                )}
+                {n.error && <span className="w-full text-destructive">{n.error}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function what(sub: AsaasSubscription) {
   return sub.kind === "plan" ? `Plano ${sub.plan_key ?? ""}` : "Canal não oficial";
@@ -141,6 +207,15 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
         </p>
       )}
       <ErrorText>{sync.error?.message}</ErrorText>
+      {data.automatic === false && (
+        <p
+          role="note"
+          className="rounded-xl border border-warning/40 bg-warning/5 px-3 py-2 text-sm"
+        >
+          <strong>Cobrança manual.</strong> Cliente anterior à cobrança automática: o sistema não
+          gera assinatura, fatura nem nota para ele. A cobrança e a nota são feitas pela equipe.
+        </p>
+      )}
 
       {data.subscriptions.length === 0 ? (
         <p className="text-sm text-muted-foreground">Este cliente não tem assinatura pelo Asaas.</p>
@@ -230,6 +305,8 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
           </ul>
         </div>
       )}
+
+      {data.nfse && <NfseSection nfse={data.nfse} />}
 
       {data.manual_activations.length > 0 && (
         <div>

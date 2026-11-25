@@ -110,6 +110,56 @@ describe("cobrança no Asaas (adendo kn)", () => {
     expect(await within(secao).findByText("Ativa")).toBeInTheDocument();
   });
 
+  it("cliente atual aparece como cobrança manual e as notas com a situação (adendo ks)", async () => {
+    vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
+    vi.mocked(asaasApi.get).mockResolvedValue({
+      ...pendente,
+      automatic: false,
+      nfse: {
+        state: "incomplete",
+        missing: ["alíquota de ISS (0 a 5%)"],
+        fiscal: { required: false, complete: true, postal_code: "07000000", address_number: "10" },
+        invoices: [
+          {
+            external_id: "inv_1",
+            payment: "pay_1",
+            status: "AUTHORIZED",
+            number: "123",
+            pdf_url: "https://asaas.test/nota.pdf",
+            error: null,
+            value_cents: 49900,
+            created_at: "2026-11-25T16:00:00Z",
+          },
+          {
+            external_id: null,
+            payment: "pay_2",
+            status: "REQUESTED",
+            number: null,
+            pdf_url: null,
+            error: "conta sem dados fiscais",
+            value_cents: 49900,
+            created_at: "2026-11-25T17:00:00Z",
+          },
+        ],
+      },
+    });
+    renderApp("/clientes/c1");
+    const secao = (await screen.findByRole("heading", { name: "Cobrança no Asaas" })).closest(
+      "section"
+    )!;
+    expect(await within(secao).findByText(/Cobrança manual\./)).toBeInTheDocument();
+    expect(
+      within(secao).getByText(/falta preencher no Admin: alíquota de ISS/)
+    ).toBeInTheDocument();
+    expect(within(secao).getByText(/CEP 07000000, nº 10/)).toBeInTheDocument();
+    expect(within(secao).getByText("Emitida")).toBeInTheDocument();
+    expect(within(secao).getByRole("link", { name: /PDF/ })).toHaveAttribute(
+      "href",
+      "https://asaas.test/nota.pdf"
+    );
+    expect(within(secao).getByText("conta sem dados fiscais")).toBeInTheDocument();
+  });
+
   it("parceiro não vê a seção", async () => {
     vi.mocked(partnersApi.me).mockReset().mockResolvedValue(partnerPanel());
     renderApp("/clientes/c1");
