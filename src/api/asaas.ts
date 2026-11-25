@@ -71,6 +71,8 @@ const overviewSchema = z.object({
   ),
   /** Falso = cliente atual, cobrado à mão pela equipe (adendo ks). Opcionais: backend anterior não manda. */
   automatic: z.boolean().optional(),
+  /** De onde vem a forma de cobrança (adendo kv): escolha da equipe, data de corte, lista do Admin, sandbox ou fechada. */
+  mode_source: z.enum(["closed", "explicit", "list", "cutoff", "sandbox"]).optional(),
   nfse: nfseSchema.optional(),
 });
 
@@ -87,6 +89,14 @@ export const asaasApi = {
   /** Confere no Asaas agora; devolve quantas assinaturas pagas foram ativadas. */
   sync: async (id: string): Promise<{ data: AsaasOverview; activated: number }> =>
     api.post(`${url(id)}/sync`, z.object({ data: overviewSchema, activated: z.number() }), {}),
+
+  /** Cobrança manual (como os clientes atuais) ou automática pelo Asaas, com motivo (adendo kv). */
+  setMode: async (
+    id: string,
+    mode: "manual" | "automatic",
+    reason: string
+  ): Promise<AsaasOverview> =>
+    (await api.put(`${url(id)}/mode`, z.object({ data: overviewSchema }), { mode, reason })).data,
 
   activate: async (id: string, subscriptionId: string, reason: string): Promise<AsaasOverview> =>
     (

@@ -24,7 +24,9 @@ vi.mock("@/api/partners", () => ({
   alertsApi: { list: vi.fn(), acknowledge: vi.fn() },
   partnersApi: { me: vi.fn(), company: vi.fn() },
 }));
-vi.mock("@/api/asaas", () => ({ asaasApi: { get: vi.fn(), sync: vi.fn(), activate: vi.fn() } }));
+vi.mock("@/api/asaas", () => ({
+  asaasApi: { get: vi.fn(), sync: vi.fn(), activate: vi.fn(), setMode: vi.fn() },
+}));
 
 const usage = {
   users_active: 1,
@@ -115,6 +117,7 @@ describe("cobrança no Asaas (adendo kn)", () => {
     vi.mocked(asaasApi.get).mockResolvedValue({
       ...pendente,
       automatic: false,
+      mode_source: "cutoff",
       nfse: {
         state: "incomplete",
         missing: ["alíquota de ISS (0 a 5%)"],
@@ -147,7 +150,7 @@ describe("cobrança no Asaas (adendo kn)", () => {
     const secao = (await screen.findByRole("heading", { name: "Cobrança no Asaas" })).closest(
       "section"
     )!;
-    expect(await within(secao).findByText(/Cobrança manual\./)).toBeInTheDocument();
+    expect(await within(secao).findByText("Cobrança manual")).toBeInTheDocument();
     expect(
       within(secao).getByText(/falta preencher no Admin: alíquota de ISS/)
     ).toBeInTheDocument();
@@ -158,6 +161,41 @@ describe("cobrança no Asaas (adendo kn)", () => {
       "https://asaas.test/nota.pdf"
     );
     expect(within(secao).getByText("conta sem dados fiscais")).toBeInTheDocument();
+  });
+
+  it("equipe passa um cliente para a cobrança manual, com motivo (adendo kv)", async () => {
+    vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
+    vi.mocked(asaasApi.get).mockResolvedValue({
+      ...pendente,
+      automatic: true,
+      mode_source: "cutoff",
+    });
+    vi.mocked(asaasApi.setMode)
+      .mockReset()
+      .mockResolvedValue({ ...pendente, automatic: false, mode_source: "explicit" });
+    const user = userEvent.setup();
+    renderApp("/clientes/c1");
+    const secao = (await screen.findByRole("heading", { name: "Cobrança no Asaas" })).closest(
+      "section"
+    )!;
+    expect(await within(secao).findByText("Cobrança automática")).toBeInTheDocument();
+    await user.click(within(secao).getByRole("button", { name: "Passar para cobrança manual" }));
+    const confirmar = within(secao).getByRole("button", { name: "Confirmar cobrança manual" });
+    expect(confirmar).toBeDisabled();
+    await user.type(
+      within(secao).getAllByLabelText("Motivo")[0]!,
+      "Contrato com boleto do financeiro"
+    );
+    await user.click(confirmar);
+    await waitFor(() =>
+      expect(asaasApi.setMode).toHaveBeenCalledWith(
+        "c1",
+        "manual",
+        "Contrato com boleto do financeiro"
+      )
+    );
+    expect(await within(secao).findByText("Cobrança manual")).toBeInTheDocument();
+    expect(within(secao).getByText(/escolhida pela equipe/)).toBeInTheDocument();
   });
 
   it("parceiro não vê a seção", async () => {

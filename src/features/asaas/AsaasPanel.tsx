@@ -102,6 +102,99 @@ function NfseSection({ nfse }: { nfse: AsaasNfse }) {
   );
 }
 
+const ORIGEM: Record<string, string> = {
+  explicit: "escolhida pela equipe",
+  cutoff: "pela data de corte",
+  list: "pela lista do Admin",
+  sandbox: "ambiente de teste",
+  closed: "cobrança automática fechada (falta a data de corte no Admin)",
+};
+
+/** Cobrança manual (como os clientes atuais) ou automática pelo Asaas — escolha da equipe, com motivo (adendo kv). */
+function ModeBox({
+  companyId,
+  automatic,
+  source,
+  onDone,
+}: {
+  companyId: string;
+  automatic: boolean;
+  source?: string;
+  onDone: (data: AsaasOverview) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const target = automatic ? "manual" : "automatic";
+  const mutation = useMutation({
+    mutationFn: () => asaasApi.setMode(companyId, target, reason.trim()),
+    onSuccess: (d) => {
+      setOpen(false);
+      setReason("");
+      onDone(d);
+    },
+  });
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    mutation.mutate();
+  };
+  return (
+    <div
+      role="note"
+      className={
+        automatic
+          ? "rounded-xl border px-3 py-2 text-sm"
+          : "rounded-xl border border-warning/40 bg-warning/5 px-3 py-2 text-sm"
+      }
+    >
+      <p>
+        {automatic ? (
+          <>
+            <strong>Cobrança automática</strong> pelo Asaas: assinatura, fatura e nota fiscal saem
+            sozinhas.
+          </>
+        ) : (
+          <>
+            <strong>Cobrança manual</strong>, como os clientes atuais: o sistema não gera
+            assinatura, fatura nem nota. A cobrança e a nota são feitas pela equipe.
+          </>
+        )}{" "}
+        {source && <span className="text-muted-foreground">({ORIGEM[source] ?? source})</span>}
+      </p>
+      {source !== "closed" && !open && (
+        <button
+          type="button"
+          className="mt-1 text-primary underline-offset-2 hover:underline"
+          onClick={() => setOpen(true)}
+        >
+          {automatic ? "Passar para cobrança manual" : "Passar para cobrança automática"}
+        </button>
+      )}
+      {open && (
+        <form onSubmit={submit} className="mt-3 space-y-3">
+          <TextArea
+            label="Motivo"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Ex.: contrato com cobrança por boleto do financeiro"
+            minLength={10}
+            maxLength={500}
+            required
+          />
+          <ErrorText>{mutation.error?.message}</ErrorText>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" loading={mutation.isPending} disabled={reason.trim().length < 10}>
+              {automatic ? "Confirmar cobrança manual" : "Confirmar cobrança automática"}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
 function what(sub: AsaasSubscription) {
   return sub.kind === "plan" ? `Plano ${sub.plan_key ?? ""}` : "Canal não oficial";
 }
@@ -207,14 +300,13 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
         </p>
       )}
       <ErrorText>{sync.error?.message}</ErrorText>
-      {data.automatic === false && (
-        <p
-          role="note"
-          className="rounded-xl border border-warning/40 bg-warning/5 px-3 py-2 text-sm"
-        >
-          <strong>Cobrança manual.</strong> Cliente anterior à cobrança automática: o sistema não
-          gera assinatura, fatura nem nota para ele. A cobrança e a nota são feitas pela equipe.
-        </p>
+      {data.automatic !== undefined && (
+        <ModeBox
+          companyId={companyId}
+          automatic={data.automatic}
+          source={data.mode_source}
+          onDone={(d) => done(d)}
+        />
       )}
 
       {data.subscriptions.length === 0 ? (

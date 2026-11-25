@@ -70,6 +70,7 @@ describe("novo workspace", () => {
 
     expect(await screen.findByText("Workspace Loja Nova criado")).toBeInTheDocument();
     expect(screen.getByText("carla@loja.com")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/Cobrança manual/)).not.toBeInTheDocument(); // só a equipe AG3
     expect(workspaceApi.create).toHaveBeenCalledWith({
       name: "Loja Nova",
       cnpj: "",
@@ -126,10 +127,15 @@ describe("novo workspace", () => {
     await user.type(screen.getByLabelText("Nome da empresa"), "Empresa Teste");
     await user.type(screen.getByLabelText("Nome"), "Daniel");
     await user.type(screen.getByLabelText("E-mail"), "teste@ag3.com");
+    await user.click(screen.getByLabelText(/Cobrança manual, como os clientes atuais/)); // adendo kv
     await user.click(screen.getByRole("button", { name: "Criar workspace e enviar convite" }));
     await waitFor(() =>
       expect(workspaceApi.create).toHaveBeenCalledWith(
-        expect.objectContaining({ plan_key: "enterprise", name: "Empresa Teste" })
+        expect.objectContaining({
+          plan_key: "enterprise",
+          name: "Empresa Teste",
+          manual_billing: true,
+        })
       )
     );
   });

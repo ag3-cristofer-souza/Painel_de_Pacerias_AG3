@@ -221,18 +221,21 @@ export interface WorkspaceInput {
   admin_email: string;
   /** Um dos `allowed_plans` do painel; sem ele, o servidor usa o primeiro do contrato. */
   plan_key?: string;
+  /** Só a equipe AG3 (cliente direto): cobrança e nota à mão, como os clientes atuais (adendo kv). */
+  manual_billing?: boolean;
 }
 
 export const workspaceApi = {
   /** Cliente novo do parceiro, dentro do limite do contrato, com o primeiro admin convidado por e-mail. */
   create: async (input: WorkspaceInput): Promise<PortfolioCompany> => {
-    const body: Record<string, string> = {
+    const body: Record<string, string | boolean> = {
       name: input.name.trim(),
       admin_name: input.admin_name.trim(),
       admin_email: input.admin_email.trim().toLowerCase(),
     };
     if (input.cnpj?.trim()) body.cnpj = input.cnpj.trim();
     if (input.plan_key) body.plan_key = input.plan_key;
+    if (input.manual_billing) body.manual_billing = true;
     return (await api.post("/partners/companies", z.object({ data: portfolioCompanySchema }), body))
       .data;
   },
