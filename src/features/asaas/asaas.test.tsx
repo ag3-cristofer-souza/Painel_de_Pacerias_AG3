@@ -25,7 +25,7 @@ vi.mock("@/api/partners", () => ({
   partnersApi: { me: vi.fn(), company: vi.fn() },
 }));
 vi.mock("@/api/asaas", () => ({
-  asaasApi: { get: vi.fn(), sync: vi.fn(), activate: vi.fn(), setMode: vi.fn() },
+  asaasApi: { get: vi.fn(), sync: vi.fn(), activate: vi.fn(), setMode: vi.fn(), end: vi.fn() },
 }));
 
 const usage = {
@@ -196,6 +196,50 @@ describe("cobrança no Asaas (adendo kn)", () => {
     );
     expect(await within(secao).findByText("Cobrança manual")).toBeInTheDocument();
     expect(within(secao).getByText(/escolhida pela equipe/)).toBeInTheDocument();
+  });
+
+  it("encerrar o plano no fim do período (adendo kx)", async () => {
+    vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
+    const ativa = {
+      ...pendente.subscriptions[0]!,
+      status: "active",
+      activated_at: "2026-11-01T10:00:00Z",
+      next_due_date: "2026-12-01",
+    };
+    vi.mocked(asaasApi.get).mockResolvedValue({ ...pendente, subscriptions: [ativa] });
+    vi.mocked(asaasApi.end)
+      .mockReset()
+      .mockResolvedValue({
+        ...pendente,
+        subscriptions: [{ ...ativa, status: "canceled", ends_on: "2026-12-01", ended_at: null }],
+      });
+    const user = userEvent.setup();
+    renderApp("/clientes/c1");
+    const secao = (await screen.findByRole("heading", { name: "Cobrança no Asaas" })).closest(
+      "section"
+    )!;
+    await user.click(
+      await within(secao).findByRole("button", { name: "Encerrar no fim do período" })
+    );
+    expect(within(secao).getByLabelText("Último dia de uso")).toHaveValue("2026-12-01");
+    const cancelar = within(secao).getByRole("button", {
+      name: "Cancelar o plano no fim do período",
+    });
+    expect(cancelar).toBeDisabled();
+    await user.type(
+      within(secao).getByLabelText("Motivo do cancelamento"),
+      "Estorno pedido pelo cliente"
+    );
+    await user.click(cancelar);
+    await waitFor(() =>
+      expect(asaasApi.end).toHaveBeenCalledWith(
+        "c1",
+        "s1",
+        "2026-12-01",
+        "Estorno pedido pelo cliente"
+      )
+    );
+    expect(await within(secao).findByText(/o cliente usa até 01\/12\/2026/)).toBeInTheDocument();
   });
 
   it("parceiro não vê a seção", async () => {

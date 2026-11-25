@@ -6,7 +6,7 @@ import { formatDate, formatDateTime } from "@/lib/format";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { ErrorText } from "@/ui/feedback";
-import { TextArea } from "@/ui/field";
+import { Field, TextArea } from "@/ui/field";
 
 /**
  * Cobrança pelo Asaas do cliente — só a equipe AG3 (adendo kn). O plano muda quando o Asaas avisa o pagamento; se o
@@ -242,11 +242,69 @@ function ActivateForm({
   );
 }
 
+/** Estorno ou cancelamento (adendo kx): cancela no Asaas; uso até a data; depois, suspensa até escolher outro plano. */
+function EndForm({
+  companyId,
+  sub,
+  onDone,
+}: {
+  companyId: string;
+  sub: AsaasSubscription;
+  onDone: (data: AsaasOverview) => void;
+}) {
+  const [endsOn, setEndsOn] = useState(sub.next_due_date ?? "");
+  const [reason, setReason] = useState("");
+  const mutation = useMutation({
+    mutationFn: () => asaasApi.end(companyId, sub.id, endsOn, reason.trim()),
+    onSuccess: onDone,
+  });
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    mutation.mutate();
+  };
+  return (
+    <form onSubmit={submit} className="mt-3 space-y-3 rounded-xl border border-destructive/40 p-4">
+      <p className="text-sm">
+        A assinatura é cancelada no Asaas agora (sem novas cobranças). O cliente usa o sistema até o
+        dia escolhido; depois, a conta fica suspensa até ele escolher um plano novo. Os admins e
+        gestores do cliente, o parceiro (se houver) e a equipe AG3 recebem e-mail agora e na
+        suspensão.
+      </p>
+      <Field
+        label="Último dia de uso"
+        type="date"
+        value={endsOn}
+        onChange={(e) => setEndsOn(e.target.value)}
+        required
+      />
+      <TextArea
+        label="Motivo do cancelamento"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Ex.: estorno pedido pelo cliente em 25/11"
+        minLength={10}
+        maxLength={500}
+        required
+      />
+      <ErrorText>{mutation.error?.message}</ErrorText>
+      <Button
+        type="submit"
+        variant="destructive"
+        loading={mutation.isPending}
+        disabled={!endsOn || reason.trim().length < 10}
+      >
+        Cancelar o plano no fim do período
+      </Button>
+    </form>
+  );
+}
+
 export function AsaasPanel({ companyId }: { companyId: string }) {
   const client = useQueryClient();
   const key = ["asaas", companyId];
   const query = useQuery({ queryKey: key, queryFn: () => asaasApi.get(companyId) });
   const [activating, setActivating] = useState<string | null>(null);
+  const [ending, setEnding] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const done = (data: AsaasOverview) => {
@@ -345,6 +403,17 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
                       Fatura no Asaas <ExternalLink className="size-3.5" aria-hidden="true" />
                     </a>
                   )}
+                  {sub.kind === "plan" &&
+                    (sub.status === "active" || sub.status === "overdue") &&
+                    ending !== sub.id && (
+                      <button
+                        type="button"
+                        className="text-destructive underline-offset-2 hover:underline"
+                        onClick={() => setEnding(sub.id)}
+                      >
+                        Encerrar no fim do período
+                      </button>
+                    )}
                   {pending && activating !== sub.id && (
                     <button
                       type="button"
@@ -355,6 +424,26 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
                     </button>
                   )}
                 </div>
+                {sub.ends_on && (
+                  <p className="font-medium text-destructive">
+                    {sub.ended_at
+                      ? `Encerrado em ${formatDate(sub.ends_on)}: conta suspensa até escolher um plano novo.`
+                      : `Cancelado: o cliente usa até ${formatDate(sub.ends_on)}; depois, suspensa até escolher um plano novo.`}
+                  </p>
+                )}
+                {ending === sub.id && (
+                  <EndForm
+                    companyId={companyId}
+                    sub={sub}
+                    onDone={(d) => {
+                      setEnding(null);
+                      setNotice(
+                        `${what(sub)} cancelado no fim do período. Os avisos foram enviados.`
+                      );
+                      done(d);
+                    }}
+                  />
+                )}
                 {activating === sub.id && (
                   <ActivateForm
                     companyId={companyId}

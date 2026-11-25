@@ -18,6 +18,9 @@ const subscriptionSchema = z.object({
   created_at: z.string().nullable(),
   activated_at: z.string().nullable(),
   canceled_at: z.string().nullable(),
+  /** Fim no fim do período (adendo kx): último dia de uso e quando a suspensão foi aplicada. */
+  ends_on: z.string().nullable().optional(),
+  ended_at: z.string().nullable().optional(),
 });
 
 const paymentSchema = z.object({
@@ -97,6 +100,21 @@ export const asaasApi = {
     reason: string
   ): Promise<AsaasOverview> =>
     (await api.put(`${url(id)}/mode`, z.object({ data: overviewSchema }), { mode, reason })).data,
+
+  /** Cancela o plano no Asaas; o cliente usa até `endsOn` e depois fica suspenso até escolher outro (adendo kx). */
+  end: async (
+    id: string,
+    subscriptionId: string,
+    endsOn: string,
+    reason: string
+  ): Promise<AsaasOverview> =>
+    (
+      await api.post(`${url(id)}/end`, z.object({ data: overviewSchema }), {
+        subscription_id: subscriptionId,
+        ends_on: endsOn,
+        reason,
+      })
+    ).data,
 
   activate: async (id: string, subscriptionId: string, reason: string): Promise<AsaasOverview> =>
     (
