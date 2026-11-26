@@ -8,11 +8,14 @@ describe("menu por quem está no painel", () => {
   it("dono do parceiro vê tudo", () => {
     expect(labels(visibleNav(partnerPanel()))).toEqual([
       "Carteira",
+      "Chamados",
+      "Relatórios de SLA",
       "Alertas",
       "Mensalidades em atraso",
       "Novo workspace",
       "Equipe",
       "Marca",
+      "Auditoria",
       "Artigos de ajuda",
       "Minha conta",
     ]);
@@ -22,13 +25,23 @@ describe("menu por quem está no painel", () => {
     const viewer = partnerPanel({ member_role: "viewer", can_admin_workspaces: false });
     expect(labels(visibleNav(viewer))).not.toContain("Novo workspace");
     expect(canSee(viewer, "/novo-workspace")).toBe(false);
+    expect(labels(visibleNav(viewer))).not.toContain("Chamados"); // não atende chamados
+    expect(canSee(viewer, "/chamados")).toBe(false);
+    expect(canSee(viewer, "/relatorios-sla")).toBe(true); // indicador: vê os relatórios (8b)
+    expect(canSee(viewer, "/auditoria")).toBe(false); // D27: só dono e administrador
+    expect(canSee(partnerPanel({ member_role: "support" }), "/auditoria")).toBe(false);
+    expect(canSee(partnerPanel({ member_role: "admin" }), "/auditoria")).toBe(true);
+    expect(labels(visibleNav(partnerPanel({ member_role: "support" })))).toContain("Chamados");
   });
 
   it("equipe AG3 não tem equipe de parceiro nem cria workspace", () => {
     expect(labels(visibleNav(staffPanel()))).toEqual([
       "Carteira",
+      "Chamados",
+      "Relatórios de SLA",
       "Alertas",
       "Mensalidades em atraso",
+      "Auditoria",
       "Artigos de ajuda",
       "Minha conta",
     ]);

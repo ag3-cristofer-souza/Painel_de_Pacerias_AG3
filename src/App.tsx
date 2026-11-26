@@ -11,6 +11,10 @@ import { MarcaPage } from "@/features/marca/MarcaPage";
 import { ArtigosPage } from "@/features/artigos/ArtigosPage";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { CarteiraPage } from "@/features/carteira/CarteiraPage";
+import { ChamadoPage } from "@/features/chamados/ChamadoPage";
+import { ChamadosPage } from "@/features/chamados/ChamadosPage";
+import { RelatoriosPage } from "@/features/chamados/RelatoriosPage";
+import { AuditoriaPage } from "@/features/auditoria/AuditoriaPage";
 import { ClientePage } from "@/features/carteira/ClientePage";
 import { ContaPage } from "@/features/conta/ContaPage";
 import { EquipePage } from "@/features/equipe/EquipePage";
@@ -39,6 +43,9 @@ export function AppRoutes() {
           <Route element={<RequireNav />}>
             <Route index element={<CarteiraPage />} />
             <Route path="/clientes/:id" element={<ClientePage />} />
+            <Route path="/chamados" element={<ChamadosPage />} />
+            <Route path="/chamados/:id" element={<ChamadoPage />} />
+            <Route path="/relatorios-sla" element={<RelatoriosPage />} />
             <Route path="/alertas" element={<AlertasPage />} />
             <Route path="/alertas/configurar" element={<ConfigurarAlertasPage />} />
             <Route path="/atrasados" element={<AtrasadosPage />} />
@@ -46,6 +53,7 @@ export function AppRoutes() {
             <Route path="/novo-workspace" element={<NovoWorkspacePage />} />
             <Route path="/equipe" element={<EquipePage />} />
             <Route path="/marca" element={<MarcaPage />} />
+            <Route path="/auditoria" element={<AuditoriaPage />} />
             <Route path="/artigos" element={<ArtigosPage />} />
             <Route path="/conta" element={<ContaPage />} />
           </Route>

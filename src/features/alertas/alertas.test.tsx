@@ -5,6 +5,12 @@ import { alertsApi, partnersApi, type Alert, type CompanyDetail } from "@/api/pa
 import { setToken } from "@/lib/session";
 import { partnerPanel, renderApp } from "@/test/render";
 
+vi.mock("@/api/audit", () => ({
+  auditApi: {
+    list: vi.fn(async () => ({ data: [], total: 0, page: 1, limit: 50 })),
+    export: vi.fn(),
+  },
+}));
 vi.mock("@/api/billing", () => ({
   billingApi: {
     get: vi.fn().mockResolvedValue({
