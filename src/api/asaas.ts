@@ -18,6 +18,9 @@ const subscriptionSchema = z.object({
   created_at: z.string().nullable(),
   activated_at: z.string().nullable(),
   canceled_at: z.string().nullable(),
+  /** Fim no fim do período (adendo lq): último dia de uso e quando a suspensão foi aplicada. */
+  ends_on: z.string().nullable().optional(),
+  ended_at: z.string().nullable().optional(),
 });
 
 const paymentSchema = z.object({
@@ -29,6 +32,31 @@ const paymentSchema = z.object({
   invoice_url: z.string().nullable(),
   due: z.string().nullable(),
   updated_at: z.string().nullable(),
+});
+
+/** Nota fiscal (B18, adendo ll): uma por pagamento. `REQUESTED` = pedida e ainda não criada no Asaas. */
+const invoiceSchema = z.object({
+  external_id: z.string().nullable(),
+  payment: z.string().nullable(),
+  status: z.string(),
+  number: z.string().nullable(),
+  pdf_url: z.string().nullable(),
+  error: z.string().nullable(),
+  value_cents: z.number(),
+  created_at: z.string(),
+});
+
+const nfseSchema = z.object({
+  state: z.enum(["off", "incomplete", "on"]),
+  missing: z.array(z.string()),
+  invoices: z.array(invoiceSchema),
+  fiscal: z.object({
+    required: z.boolean(),
+    complete: z.boolean(),
+    postal_code: z.string().optional(),
+    address_number: z.string().optional(),
+    complement: z.string().optional(),
+  }),
 });
 
 const overviewSchema = z.object({
@@ -44,10 +72,16 @@ const overviewSchema = z.object({
       description: z.string(),
     })
   ),
+  /** Falso = cliente atual, cobrado à mão pela equipe (adendo ll). Opcionais: backend anterior não manda. */
+  automatic: z.boolean().optional(),
+  /** De onde vem a forma de cobrança (adendo lo): escolha da equipe, data de corte, lista do Admin, sandbox ou fechada. */
+  mode_source: z.enum(["closed", "explicit", "list", "cutoff", "sandbox"]).optional(),
+  nfse: nfseSchema.optional(),
 });
 
 export type AsaasOverview = z.infer<typeof overviewSchema>;
 export type AsaasSubscription = z.infer<typeof subscriptionSchema>;
+export type AsaasNfse = z.infer<typeof nfseSchema>;
 
 const url = (id: string) => `/partners/companies/${id}/asaas`;
 
@@ -58,6 +92,29 @@ export const asaasApi = {
   /** Confere no Asaas agora; devolve quantas assinaturas pagas foram ativadas. */
   sync: async (id: string): Promise<{ data: AsaasOverview; activated: number }> =>
     api.post(`${url(id)}/sync`, z.object({ data: overviewSchema, activated: z.number() }), {}),
+
+  /** Cobrança manual (como os clientes atuais) ou automática pelo Asaas, com motivo (adendo lo). */
+  setMode: async (
+    id: string,
+    mode: "manual" | "automatic",
+    reason: string
+  ): Promise<AsaasOverview> =>
+    (await api.put(`${url(id)}/mode`, z.object({ data: overviewSchema }), { mode, reason })).data,
+
+  /** Cancela o plano no Asaas; o cliente usa até `endsOn` e depois fica suspenso até escolher outro (adendo lq). */
+  end: async (
+    id: string,
+    subscriptionId: string,
+    endsOn: string,
+    reason: string
+  ): Promise<AsaasOverview> =>
+    (
+      await api.post(`${url(id)}/end`, z.object({ data: overviewSchema }), {
+        subscription_id: subscriptionId,
+        ends_on: endsOn,
+        reason,
+      })
+    ).data,
 
   activate: async (id: string, subscriptionId: string, reason: string): Promise<AsaasOverview> =>
     (

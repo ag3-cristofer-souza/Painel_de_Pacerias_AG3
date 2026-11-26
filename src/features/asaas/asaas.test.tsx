@@ -30,7 +30,9 @@ vi.mock("@/api/partners", () => ({
   alertsApi: { list: vi.fn(), acknowledge: vi.fn() },
   partnersApi: { me: vi.fn(), company: vi.fn() },
 }));
-vi.mock("@/api/asaas", () => ({ asaasApi: { get: vi.fn(), sync: vi.fn(), activate: vi.fn() } }));
+vi.mock("@/api/asaas", () => ({
+  asaasApi: { get: vi.fn(), sync: vi.fn(), activate: vi.fn(), setMode: vi.fn(), end: vi.fn() },
+}));
 
 const usage = {
   users_active: 1,
@@ -114,6 +116,136 @@ describe("cobrança no Asaas (adendo kn)", () => {
       )
     );
     expect(await within(secao).findByText("Ativa")).toBeInTheDocument();
+  });
+
+  it("cliente atual aparece como cobrança manual e as notas com a situação (adendo ll)", async () => {
+    vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
+    vi.mocked(asaasApi.get).mockResolvedValue({
+      ...pendente,
+      automatic: false,
+      mode_source: "cutoff",
+      nfse: {
+        state: "incomplete",
+        missing: ["alíquota de ISS (0 a 5%)"],
+        fiscal: { required: false, complete: true, postal_code: "07000000", address_number: "10" },
+        invoices: [
+          {
+            external_id: "inv_1",
+            payment: "pay_1",
+            status: "AUTHORIZED",
+            number: "123",
+            pdf_url: "https://asaas.test/nota.pdf",
+            error: null,
+            value_cents: 49900,
+            created_at: "2026-11-25T16:00:00Z",
+          },
+          {
+            external_id: null,
+            payment: "pay_2",
+            status: "REQUESTED",
+            number: null,
+            pdf_url: null,
+            error: "conta sem dados fiscais",
+            value_cents: 49900,
+            created_at: "2026-11-25T17:00:00Z",
+          },
+        ],
+      },
+    });
+    renderApp("/clientes/c1");
+    const secao = (await screen.findByRole("heading", { name: "Cobrança no Asaas" })).closest(
+      "section"
+    )!;
+    expect(await within(secao).findByText("Cobrança manual")).toBeInTheDocument();
+    expect(
+      within(secao).getByText(/falta preencher no Admin: alíquota de ISS/)
+    ).toBeInTheDocument();
+    expect(within(secao).getByText(/CEP 07000000, nº 10/)).toBeInTheDocument();
+    expect(within(secao).getByText("Emitida")).toBeInTheDocument();
+    expect(within(secao).getByRole("link", { name: /PDF/ })).toHaveAttribute(
+      "href",
+      "https://asaas.test/nota.pdf"
+    );
+    expect(within(secao).getByText("conta sem dados fiscais")).toBeInTheDocument();
+  });
+
+  it("equipe passa um cliente para a cobrança manual, com motivo (adendo lo)", async () => {
+    vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
+    vi.mocked(asaasApi.get).mockResolvedValue({
+      ...pendente,
+      automatic: true,
+      mode_source: "cutoff",
+    });
+    vi.mocked(asaasApi.setMode)
+      .mockReset()
+      .mockResolvedValue({ ...pendente, automatic: false, mode_source: "explicit" });
+    const user = userEvent.setup();
+    renderApp("/clientes/c1");
+    const secao = (await screen.findByRole("heading", { name: "Cobrança no Asaas" })).closest(
+      "section"
+    )!;
+    expect(await within(secao).findByText("Cobrança automática")).toBeInTheDocument();
+    await user.click(within(secao).getByRole("button", { name: "Passar para cobrança manual" }));
+    const confirmar = within(secao).getByRole("button", { name: "Confirmar cobrança manual" });
+    expect(confirmar).toBeDisabled();
+    await user.type(
+      within(secao).getAllByLabelText("Motivo")[0]!,
+      "Contrato com boleto do financeiro"
+    );
+    await user.click(confirmar);
+    await waitFor(() =>
+      expect(asaasApi.setMode).toHaveBeenCalledWith(
+        "c1",
+        "manual",
+        "Contrato com boleto do financeiro"
+      )
+    );
+    expect(await within(secao).findByText("Cobrança manual")).toBeInTheDocument();
+    expect(within(secao).getByText(/escolhida pela equipe/)).toBeInTheDocument();
+  });
+
+  it("encerrar o plano no fim do período (adendo lq)", async () => {
+    vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
+    const ativa = {
+      ...pendente.subscriptions[0]!,
+      status: "active",
+      activated_at: "2026-11-01T10:00:00Z",
+      next_due_date: "2026-12-01",
+    };
+    vi.mocked(asaasApi.get).mockResolvedValue({ ...pendente, subscriptions: [ativa] });
+    vi.mocked(asaasApi.end)
+      .mockReset()
+      .mockResolvedValue({
+        ...pendente,
+        subscriptions: [{ ...ativa, status: "canceled", ends_on: "2026-12-01", ended_at: null }],
+      });
+    const user = userEvent.setup();
+    renderApp("/clientes/c1");
+    const secao = (await screen.findByRole("heading", { name: "Cobrança no Asaas" })).closest(
+      "section"
+    )!;
+    await user.click(
+      await within(secao).findByRole("button", { name: "Encerrar no fim do período" })
+    );
+    expect(within(secao).getByLabelText("Último dia de uso")).toHaveValue("2026-12-01");
+    const cancelar = within(secao).getByRole("button", {
+      name: "Cancelar o plano no fim do período",
+    });
+    expect(cancelar).toBeDisabled();
+    await user.type(
+      within(secao).getByLabelText("Motivo do cancelamento"),
+      "Estorno pedido pelo cliente"
+    );
+    await user.click(cancelar);
+    await waitFor(() =>
+      expect(asaasApi.end).toHaveBeenCalledWith(
+        "c1",
+        "s1",
+        "2026-12-01",
+        "Estorno pedido pelo cliente"
+      )
+    );
+    expect(await within(secao).findByText(/o cliente usa até 01\/12\/2026/)).toBeInTheDocument();
   });
 
   it("parceiro não vê a seção", async () => {

@@ -5,6 +5,7 @@ import {
   BookOpen,
   Building2,
   CirclePlus,
+  Gauge,
   ScrollText,
   LifeBuoy,
   Palette,
@@ -30,6 +31,8 @@ export const canSeeAudit = (p: Panel) =>
 
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Carteira", icon: Building2, visible: always },
+  // o dashboard do Django Admin, só para a equipe AG3 (adendo lz)
+  { to: "/visao-ag3", label: "Visão AG3", icon: Gauge, visible: (p) => p.kind === "ag3" },
   { to: "/chamados", label: "Chamados", icon: LifeBuoy, visible: canHandleTickets },
   { to: "/relatorios-sla", label: "Relatórios de SLA", icon: BarChart3, visible: always },
   { to: "/alertas", label: "Alertas", icon: BellRing, visible: always },

@@ -7,6 +7,7 @@ import { partnersApi, type CompanyDetail } from "@/api/partners";
 import { usePanel } from "@/features/auth/AuthProvider";
 import { AlertList } from "@/features/alertas/AlertList";
 import { AsaasPanel } from "@/features/asaas/AsaasPanel";
+import { ResendInvite } from "@/features/convite/ResendInvite";
 import { BillingPanel } from "@/features/mensalidade/BillingPanel";
 import { formatCost, formatDate, formatInt, formatMinutes, formatMonth } from "@/lib/format";
 import { canHandleTickets } from "@/lib/support";
@@ -140,6 +141,9 @@ function History({ company }: { company: CompanyDetail }) {
 }
 
 function Users({ company }: { company: CompanyDetail }) {
+  const panel = usePanel();
+  // parceiro: dono ou admin; equipe AG3: quem atende o cliente direto (o servidor confere de novo)
+  const canInvite = panel.kind === "ag3" || panel.can_admin_workspaces;
   return (
     <Section title="Usuários do cliente" aside={`${formatInt(company.users.length)} no total`}>
       {company.users.length === 0 ? (
@@ -159,7 +163,16 @@ function Users({ company }: { company: CompanyDetail }) {
                     {label(COMPANY_ROLE_LABELS, u.role)}
                   </span>
                   {st && st.tone !== "success" && <Badge tone={st.tone}>{st.label}</Badge>}
+                  {u.pending_invite && <Badge tone="warning">Ainda não entrou</Badge>}
                 </div>
+                {u.pending_invite && canInvite && (
+                  <div className="w-full">
+                    <ResendInvite
+                      email={u.email}
+                      send={() => partnersApi.resendInvite(company.id, u.id)}
+                    />
+                  </div>
+                )}
               </li>
             );
           })}

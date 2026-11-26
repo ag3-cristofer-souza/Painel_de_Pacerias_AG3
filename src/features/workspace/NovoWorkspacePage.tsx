@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Building2, CheckCircle2, Layers, Mail, UserRound } from "lucide-react";
+import { Building2, CheckCircle2, Layers, Mail, Receipt, UserRound } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { workspaceApi, type PortfolioCompany, type WorkspaceInput } from "@/api/partners";
@@ -167,6 +167,28 @@ export function NovoWorkspacePage() {
                   ? "O catálogo de planos. O plano decide as telas e os limites do cliente; a troca depois é pelo Django Admin ou pelo upgrade do próprio cliente."
                   : "Os planos que o seu contrato permite. O plano decide as telas e os limites do cliente, e dá para trocar depois na tela dele."}
               </p>
+            </fieldset>
+          )}
+          {direto && (
+            <fieldset className="space-y-2">
+              <legend className="mb-1 flex items-center gap-2 text-sm font-semibold">
+                <Receipt className="size-4" aria-hidden="true" />A cobrança
+              </legend>
+              <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border px-4 py-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.manual_billing ?? false}
+                  onChange={(e) => setForm((f) => ({ ...f, manual_billing: e.target.checked }))}
+                  className="mt-0.5 size-5 accent-primary"
+                />
+                <span>
+                  <span className="font-medium">Cobrança manual, como os clientes atuais</span>
+                  <span className="block text-xs text-muted-foreground">
+                    O sistema não gera assinatura, fatura nem nota fiscal para este cliente: a
+                    equipe cobra e emite à mão. Dá para mudar depois em Cobrança no Asaas.
+                  </span>
+                </span>
+              </label>
             </fieldset>
           )}
           <fieldset className="space-y-3">

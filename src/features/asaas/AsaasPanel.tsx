@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, RefreshCw, ShieldCheck } from "lucide-react";
 import { useState, type FormEvent } from "react";
-import { asaasApi, type AsaasOverview, type AsaasSubscription } from "@/api/asaas";
+import { asaasApi, type AsaasNfse, type AsaasOverview, type AsaasSubscription } from "@/api/asaas";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { Badge } from "@/ui/badge";
 import { Button } from "@/ui/button";
 import { ErrorText } from "@/ui/feedback";
-import { TextArea } from "@/ui/field";
+import { Field, TextArea } from "@/ui/field";
 
 /**
  * Cobrança pelo Asaas do cliente — só a equipe AG3 (adendo kn). O plano muda quando o Asaas avisa o pagamento; se o
@@ -35,6 +35,165 @@ const brl = (cents: number | null) =>
   cents === null
     ? "—"
     : new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+
+const NOTA: Record<string, { label: string; tone: "neutral" | "success" | "warning" | "danger" }> =
+  {
+    REQUESTED: { label: "Pedida", tone: "warning" },
+    SCHEDULED: { label: "Agendada", tone: "warning" },
+    SYNCHRONIZED: { label: "Na prefeitura", tone: "warning" },
+    AUTHORIZED: { label: "Emitida", tone: "success" },
+    ERROR: { label: "Recusada", tone: "danger" },
+    PROCESSING_CANCELLATION: { label: "Cancelando", tone: "warning" },
+    CANCELED: { label: "Cancelada", tone: "neutral" },
+    CANCELLATION_DENIED: { label: "Cancelamento negado", tone: "danger" },
+    SKIPPED: { label: "Não emitida (estorno)", tone: "neutral" },
+  };
+
+/** Notas fiscais do cliente (B18, adendo ll): situação da emissão automática, endereço e uma linha por nota. */
+function NfseSection({ nfse }: { nfse: AsaasNfse }) {
+  const situacao =
+    nfse.state === "off"
+      ? "Emissão automática desligada."
+      : nfse.state === "incomplete"
+        ? `Emissão automática ligada, mas falta preencher no Admin: ${nfse.missing.join(", ")}.`
+        : "Emissão automática ligada: uma nota por pagamento confirmado.";
+  const f = nfse.fiscal;
+  return (
+    <div>
+      <h3 className="mb-2 text-sm font-semibold">Notas fiscais</h3>
+      <p className="text-sm text-muted-foreground">
+        {situacao}{" "}
+        {f.complete
+          ? `Endereço: CEP ${f.postal_code ?? ""}, nº ${f.address_number ?? ""}${f.complement ? `, ${f.complement}` : ""}.`
+          : f.required
+            ? "Sem endereço: o cliente precisa informar CEP e número antes de pagar."
+            : "Sem endereço informado."}
+      </p>
+      {nfse.invoices.length > 0 && (
+        <ul className="mt-2 space-y-1 text-sm">
+          {nfse.invoices.map((n) => {
+            const st = NOTA[n.status] ?? { label: n.status, tone: "neutral" as const };
+            return (
+              <li
+                key={n.external_id ?? n.payment ?? n.created_at}
+                className="flex flex-wrap items-center gap-x-2"
+              >
+                <span>{formatDateTime(n.created_at)}</span>
+                <span className="font-medium">{brl(n.value_cents)}</span>
+                <Badge tone={st.tone}>{st.label}</Badge>
+                {n.number && <span className="text-muted-foreground">nº {n.number}</span>}
+                {n.pdf_url && (
+                  <a
+                    href={n.pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-primary underline-offset-2 hover:underline"
+                  >
+                    PDF <ExternalLink className="size-3.5" aria-hidden="true" />
+                  </a>
+                )}
+                {n.error && <span className="w-full text-destructive">{n.error}</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const ORIGEM: Record<string, string> = {
+  explicit: "escolhida pela equipe",
+  cutoff: "pela data de corte",
+  list: "pela lista do Admin",
+  sandbox: "ambiente de teste",
+  closed: "cobrança automática fechada (falta a data de corte no Admin)",
+};
+
+/** Cobrança manual (como os clientes atuais) ou automática pelo Asaas — escolha da equipe, com motivo (adendo lo). */
+function ModeBox({
+  companyId,
+  automatic,
+  source,
+  onDone,
+}: {
+  companyId: string;
+  automatic: boolean;
+  source?: string;
+  onDone: (data: AsaasOverview) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const target = automatic ? "manual" : "automatic";
+  const mutation = useMutation({
+    mutationFn: () => asaasApi.setMode(companyId, target, reason.trim()),
+    onSuccess: (d) => {
+      setOpen(false);
+      setReason("");
+      onDone(d);
+    },
+  });
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    mutation.mutate();
+  };
+  return (
+    <div
+      role="note"
+      className={
+        automatic
+          ? "rounded-xl border px-3 py-2 text-sm"
+          : "rounded-xl border border-warning/40 bg-warning/5 px-3 py-2 text-sm"
+      }
+    >
+      <p>
+        {automatic ? (
+          <>
+            <strong>Cobrança automática</strong> pelo Asaas: assinatura, fatura e nota fiscal saem
+            sozinhas.
+          </>
+        ) : (
+          <>
+            <strong>Cobrança manual</strong>, como os clientes atuais: o sistema não gera
+            assinatura, fatura nem nota. A cobrança e a nota são feitas pela equipe.
+          </>
+        )}{" "}
+        {source && <span className="text-muted-foreground">({ORIGEM[source] ?? source})</span>}
+      </p>
+      {source !== "closed" && !open && (
+        <button
+          type="button"
+          className="mt-1 text-primary underline-offset-2 hover:underline"
+          onClick={() => setOpen(true)}
+        >
+          {automatic ? "Passar para cobrança manual" : "Passar para cobrança automática"}
+        </button>
+      )}
+      {open && (
+        <form onSubmit={submit} className="mt-3 space-y-3">
+          <TextArea
+            label="Motivo"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Ex.: contrato com cobrança por boleto do financeiro"
+            minLength={10}
+            maxLength={500}
+            required
+          />
+          <ErrorText>{mutation.error?.message}</ErrorText>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" loading={mutation.isPending} disabled={reason.trim().length < 10}>
+              {automatic ? "Confirmar cobrança manual" : "Confirmar cobrança automática"}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
 
 function what(sub: AsaasSubscription) {
   return sub.kind === "plan" ? `Plano ${sub.plan_key ?? ""}` : "Canal não oficial";
@@ -83,11 +242,69 @@ function ActivateForm({
   );
 }
 
+/** Estorno ou cancelamento (adendo lq): cancela no Asaas; uso até a data; depois, suspensa até escolher outro plano. */
+function EndForm({
+  companyId,
+  sub,
+  onDone,
+}: {
+  companyId: string;
+  sub: AsaasSubscription;
+  onDone: (data: AsaasOverview) => void;
+}) {
+  const [endsOn, setEndsOn] = useState(sub.next_due_date ?? "");
+  const [reason, setReason] = useState("");
+  const mutation = useMutation({
+    mutationFn: () => asaasApi.end(companyId, sub.id, endsOn, reason.trim()),
+    onSuccess: onDone,
+  });
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    mutation.mutate();
+  };
+  return (
+    <form onSubmit={submit} className="mt-3 space-y-3 rounded-xl border border-destructive/40 p-4">
+      <p className="text-sm">
+        A assinatura é cancelada no Asaas agora (sem novas cobranças). O cliente usa o sistema até o
+        dia escolhido; depois, a conta fica suspensa até ele escolher um plano novo. Os admins e
+        gestores do cliente, o parceiro (se houver) e a equipe AG3 recebem e-mail agora e na
+        suspensão.
+      </p>
+      <Field
+        label="Último dia de uso"
+        type="date"
+        value={endsOn}
+        onChange={(e) => setEndsOn(e.target.value)}
+        required
+      />
+      <TextArea
+        label="Motivo do cancelamento"
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Ex.: estorno pedido pelo cliente em 25/11"
+        minLength={10}
+        maxLength={500}
+        required
+      />
+      <ErrorText>{mutation.error?.message}</ErrorText>
+      <Button
+        type="submit"
+        variant="destructive"
+        loading={mutation.isPending}
+        disabled={!endsOn || reason.trim().length < 10}
+      >
+        Cancelar o plano no fim do período
+      </Button>
+    </form>
+  );
+}
+
 export function AsaasPanel({ companyId }: { companyId: string }) {
   const client = useQueryClient();
   const key = ["asaas", companyId];
   const query = useQuery({ queryKey: key, queryFn: () => asaasApi.get(companyId) });
   const [activating, setActivating] = useState<string | null>(null);
+  const [ending, setEnding] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const done = (data: AsaasOverview) => {
@@ -141,6 +358,14 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
         </p>
       )}
       <ErrorText>{sync.error?.message}</ErrorText>
+      {data.automatic !== undefined && (
+        <ModeBox
+          companyId={companyId}
+          automatic={data.automatic}
+          source={data.mode_source}
+          onDone={(d) => done(d)}
+        />
+      )}
 
       {data.subscriptions.length === 0 ? (
         <p className="text-sm text-muted-foreground">Este cliente não tem assinatura pelo Asaas.</p>
@@ -178,6 +403,17 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
                       Fatura no Asaas <ExternalLink className="size-3.5" aria-hidden="true" />
                     </a>
                   )}
+                  {sub.kind === "plan" &&
+                    (sub.status === "active" || sub.status === "overdue") &&
+                    ending !== sub.id && (
+                      <button
+                        type="button"
+                        className="text-destructive underline-offset-2 hover:underline"
+                        onClick={() => setEnding(sub.id)}
+                      >
+                        Encerrar no fim do período
+                      </button>
+                    )}
                   {pending && activating !== sub.id && (
                     <button
                       type="button"
@@ -188,6 +424,26 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
                     </button>
                   )}
                 </div>
+                {sub.ends_on && (
+                  <p className="font-medium text-destructive">
+                    {sub.ended_at
+                      ? `Encerrado em ${formatDate(sub.ends_on)}: conta suspensa até escolher um plano novo.`
+                      : `Cancelado: o cliente usa até ${formatDate(sub.ends_on)}; depois, suspensa até escolher um plano novo.`}
+                  </p>
+                )}
+                {ending === sub.id && (
+                  <EndForm
+                    companyId={companyId}
+                    sub={sub}
+                    onDone={(d) => {
+                      setEnding(null);
+                      setNotice(
+                        `${what(sub)} cancelado no fim do período. Os avisos foram enviados.`
+                      );
+                      done(d);
+                    }}
+                  />
+                )}
                 {activating === sub.id && (
                   <ActivateForm
                     companyId={companyId}
@@ -230,6 +486,8 @@ export function AsaasPanel({ companyId }: { companyId: string }) {
           </ul>
         </div>
       )}
+
+      {data.nfse && <NfseSection nfse={data.nfse} />}
 
       {data.manual_activations.length > 0 && (
         <div>

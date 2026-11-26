@@ -37,6 +37,7 @@ describe("menu por quem está no painel", () => {
   it("equipe AG3 não tem equipe de parceiro nem cria workspace", () => {
     expect(labels(visibleNav(staffPanel()))).toEqual([
       "Carteira",
+      "Visão AG3",
       "Chamados",
       "Relatórios de SLA",
       "Alertas",
@@ -47,6 +48,7 @@ describe("menu por quem está no painel", () => {
     ]);
     expect(canSee(staffPanel(), "/equipe")).toBe(false);
     expect(canSee(staffPanel(), "/marca")).toBe(false);
+    expect(canSee(partnerPanel(), "/visao-ag3")).toBe(false); // parceiro não vê a Visão AG3
   });
 
   it("admin global da AG3 cria cliente direto (adendo kh)", () => {
