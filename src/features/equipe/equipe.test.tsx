@@ -9,7 +9,13 @@ import { partnerPanel, renderApp, staffPanel } from "@/test/render";
 vi.mock("@/api/partners", () => ({
   partnersApi: { me: vi.fn() },
   workspaceApi: { create: vi.fn() },
-  teamApi: { list: vi.fn(), invite: vi.fn(), update: vi.fn(), remove: vi.fn() },
+  teamApi: {
+    list: vi.fn(),
+    invite: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn(),
+    resendInvite: vi.fn(),
+  },
 }));
 
 const membro = (overrides: Partial<Member> = {}): Member => ({
@@ -29,7 +35,8 @@ beforeEach(() => {
   vi.mocked(partnersApi.me).mockReset().mockResolvedValue(partnerPanel());
   vi.mocked(workspaceApi.create).mockReset();
   vi.mocked(teamApi.list).mockReset().mockResolvedValue([eu, membro()]);
-  for (const fn of [teamApi.invite, teamApi.update, teamApi.remove]) vi.mocked(fn).mockReset();
+  for (const fn of [teamApi.invite, teamApi.update, teamApi.remove, teamApi.resendInvite])
+    vi.mocked(fn).mockReset();
   setToken("ag3s_teste");
 });
 
@@ -218,6 +225,17 @@ describe("equipe", () => {
     renderApp("/equipe");
     await userEvent.setup().click(await screen.findByRole("button", { name: "Desativar" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("pelo menos um dono ativo");
+  });
+
+  it("reenvia o convite de quem ainda não entrou (adendo lc)", async () => {
+    vi.mocked(teamApi.list).mockResolvedValue([eu, membro({ pending_invite: true })]);
+    vi.mocked(teamApi.resendInvite).mockResolvedValue();
+    renderApp("/equipe");
+    expect(await screen.findByText("Ainda não entrou")).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("button", { name: "Reenviar convite" }));
+    await waitFor(() => expect(teamApi.resendInvite).toHaveBeenCalledWith("m2"));
+    expect(await screen.findByText(/Enviado para bia@parceiro.com/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Convite reenviado" })).toBeDisabled();
   });
 
   it("quem não é dono só vê a equipe", async () => {

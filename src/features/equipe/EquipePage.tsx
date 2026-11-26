@@ -3,6 +3,7 @@ import { Loader2, Mail, UserPlus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { teamApi, type Member, type MemberRole } from "@/api/partners";
 import { usePanel } from "@/features/auth/AuthProvider";
+import { ResendInvite } from "@/features/convite/ResendInvite";
 import { formatDate } from "@/lib/format";
 import { MEMBER_ROLE_HELP, MEMBER_ROLE_LABELS, MEMBER_ROLES, isOwner } from "@/lib/roles";
 import { cn } from "@/lib/utils";
@@ -119,6 +120,9 @@ function MemberRow({
             {member.full_name}
             {isSelf && <span className="text-xs text-muted-foreground">(você)</span>}
             {!member.is_active && <Badge>Desativado</Badge>}
+            {member.is_active && member.pending_invite && (
+              <Badge tone="warning">Ainda não entrou</Badge>
+            )}
           </p>
           <p className="truncate text-xs text-muted-foreground">
             {member.email} · desde {formatDate(member.created_at)}
@@ -159,6 +163,9 @@ function MemberRow({
           </span>
         )}
       </div>
+      {canEdit && !isSelf && member.is_active && member.pending_invite && (
+        <ResendInvite email={member.email} send={() => teamApi.resendInvite(member.id)} />
+      )}
       {confirmRemove && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm">
           <p>
