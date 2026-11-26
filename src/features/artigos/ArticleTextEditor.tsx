@@ -25,7 +25,7 @@ const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 const MAX_IMAGE = 5 * 1024 * 1024;
 
 /**
- * Texto do artigo com barra de formatação, imagem (botão, colar ou arrastar) e "Ver como o cliente" (adendo kp). Em
+ * Texto do artigo com barra de formatação, imagem (botão, colar ou arrastar) e "Ver como o cliente" (adendo li). Em
  * tela larga, escrever e ver ficam lado a lado; no celular, em abas.
  */
 export function ArticleTextEditor({

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Layers, Loader2, LogIn, PauseCircle, PlayCircle } from "lucide-react";
+import { ArrowLeft, Layers, LifeBuoy, Loader2, LogIn, PauseCircle, PlayCircle } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
@@ -10,6 +10,9 @@ import { AsaasPanel } from "@/features/asaas/AsaasPanel";
 import { ResendInvite } from "@/features/convite/ResendInvite";
 import { BillingPanel } from "@/features/mensalidade/BillingPanel";
 import { formatCost, formatDate, formatInt, formatMinutes, formatMonth } from "@/lib/format";
+import { canHandleTickets } from "@/lib/support";
+import { AuditList } from "@/features/auditoria/AuditList";
+import { canSeeAudit } from "@/features/shell/navigation";
 import {
   COMPANY_ROLE_LABELS,
   SUSPENSION_EFFECTS,
@@ -437,6 +440,15 @@ export function ClientePage() {
             Entrar no workspace
           </a>
         )}
+        {canHandleTickets(panel) && (
+          <Link
+            to={`/chamados?cliente=${encodeURIComponent(company.id)}`}
+            className="ml-2 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary"
+          >
+            <LifeBuoy className="size-4" aria-hidden="true" />
+            Chamados deste cliente
+          </Link>
+        )}
       </div>
 
       {suspended && (
@@ -472,6 +484,11 @@ export function ClientePage() {
         )}
         <History company={company} />
         <Users company={company} />
+        {canSeeAudit(panel) && (
+          <Section title="Auditoria" aside="O que acontece neste cliente">
+            <AuditList source="clients" companyId={company.id} />
+          </Section>
+        )}
       </div>
     </>
   );

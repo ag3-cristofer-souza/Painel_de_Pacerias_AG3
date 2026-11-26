@@ -219,7 +219,7 @@ const memberSchema = z.object({
   role: z.string(),
   is_active: z.boolean(),
   created_at: z.string(),
-  /** Ainda não definiu a senha pelo convite (adendo lf). */
+  /** Ainda não definiu a senha pelo convite (adendo ly). */
   pending_invite: z.boolean().optional(),
 });
 
@@ -233,7 +233,7 @@ export interface WorkspaceInput {
   admin_email: string;
   /** Um dos `allowed_plans` do painel; sem ele, o servidor usa o primeiro do contrato. */
   plan_key?: string;
-  /** Só a equipe AG3 (cliente direto): cobrança e nota à mão, como os clientes atuais (adendo kv). */
+  /** Só a equipe AG3 (cliente direto): cobrança e nota à mão, como os clientes atuais (adendo lo). */
   manual_billing?: boolean;
 }
 

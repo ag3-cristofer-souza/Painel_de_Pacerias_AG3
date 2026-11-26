@@ -134,7 +134,7 @@ describe("novo workspace", () => {
     await user.type(screen.getByLabelText("Nome da empresa"), "Empresa Teste");
     await user.type(screen.getByLabelText("Nome"), "Daniel");
     await user.type(screen.getByLabelText("E-mail"), "teste@ag3.com");
-    await user.click(screen.getByLabelText(/Cobrança manual, como os clientes atuais/)); // adendo kv
+    await user.click(screen.getByLabelText(/Cobrança manual, como os clientes atuais/)); // adendo lo
     await user.click(screen.getByRole("button", { name: "Criar workspace e enviar convite" }));
     await waitFor(() =>
       expect(workspaceApi.create).toHaveBeenCalledWith(
@@ -227,7 +227,7 @@ describe("equipe", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("pelo menos um dono ativo");
   });
 
-  it("reenvia o convite de quem ainda não entrou (adendo lf)", async () => {
+  it("reenvia o convite de quem ainda não entrou (adendo ly)", async () => {
     vi.mocked(teamApi.list).mockResolvedValue([eu, membro({ pending_invite: true })]);
     vi.mocked(teamApi.resendInvite).mockResolvedValue();
     renderApp("/equipe");

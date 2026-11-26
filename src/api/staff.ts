@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { api } from "./client";
 
-/** Visão AG3 (adendo lg): o dashboard do Django Admin, só para a equipe AG3. `health` só vem para N2/N3 e o admin global. */
+/** Visão AG3 (adendo lz): o dashboard do Django Admin, só para a equipe AG3. `health` só vem para N2/N3 e o admin global. */
 
 const num = z.number();
 const text = z.union([z.string(), z.number()]).transform(String);

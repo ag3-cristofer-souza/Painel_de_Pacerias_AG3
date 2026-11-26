@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { applyBold, applyLine, applyLink, insertImage, parseArticle, parseInline } from "./format";
 
-describe("formato dos artigos (adendo kp)", () => {
+describe("formato dos artigos (adendo li)", () => {
   it("artigo antigo continua igual: parágrafo, título e lista", () => {
     expect(parseArticle("Abra o menu.\nDepois clique.\n\n## Canais\n\n- um\n- dois")).toEqual([
       { t: "p", v: "Abra o menu.\nDepois clique." },

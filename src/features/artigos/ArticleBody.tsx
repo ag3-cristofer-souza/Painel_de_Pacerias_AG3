@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { parseArticle, parseInline } from "./format";
 
 /**
- * O artigo como o cliente vê no menu Ajuda do painel (adendo kp). Mesmo formato e mesmo desenho do
+ * O artigo como o cliente vê no menu Ajuda do painel (adendo li). Mesmo formato e mesmo desenho do
  * `src/components/help/ArticleBody.tsx` do painel. Tudo vira elemento do React: o que se escreve nunca vira HTML.
  */
 function Inline({ text }: { text: string }) {

@@ -71,7 +71,7 @@ beforeEach(() => {
   setToken("ag3s_teste");
 });
 
-describe("Visão AG3 (adendo lg)", () => {
+describe("Visão AG3 (adendo lz)", () => {
   it("equipe AG3 vê os blocos; cliente de parceiro sem link; bloco fora não derruba a tela", async () => {
     vi.mocked(partnersApi.me).mockResolvedValue(staffPanel());
     vi.mocked(staffApi.dashboard).mockResolvedValue(painel(true));

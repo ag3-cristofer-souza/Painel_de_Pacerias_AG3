@@ -95,4 +95,26 @@ export const api = {
   patch: <T>(url: string, schema: ZodType<T>, body?: unknown) =>
     call({ method: "PATCH", url, data: body }, schema),
   delete: <T>(url: string, schema: ZodType<T>) => call({ method: "DELETE", url }, schema),
+  /** Formulário com arquivos (anexos dos chamados): o navegador põe o `Content-Type` com o separador; prazo maior. */
+  upload: <T>(url: string, schema: ZodType<T>, form: FormData) =>
+    call({ method: "POST", url, data: form, timeout: 300_000 }, schema),
+  /** Arquivo gerado pelo servidor (CSV da auditoria): devolve o conteúdo, sem envelope. */
+  download: async (url: string, params?: Record<string, unknown>): Promise<Blob> => {
+    if (!apiUrl()) throw new ApiError(0, MISSING_CONFIG);
+    try {
+      return (
+        await http.request<Blob>({
+          method: "GET",
+          url,
+          params,
+          responseType: "blob",
+          timeout: 120_000,
+        })
+      ).data;
+    } catch (error) {
+      const apiError = toApiError(error);
+      if (apiError.status === 401 && getToken()) onUnauthorized?.();
+      throw apiError;
+    }
+  },
 };

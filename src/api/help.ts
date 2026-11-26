@@ -46,7 +46,7 @@ export const helpApi = {
     (await api.post("/partners/help-articles", one, input)).data,
   update: async (id: string, input: Partial<ArticleInput>): Promise<Article> =>
     (await api.put(`/partners/help-articles/${id}`, one, input)).data,
-  /** Imagem do editor (adendo kp): PNG, JPEG, WebP ou GIF até 5 MB → URL pública para o texto. */
+  /** Imagem do editor (adendo li): PNG, JPEG, WebP ou GIF até 5 MB → URL pública para o texto. */
   uploadImage: async (file: File): Promise<string> => {
     const form = new FormData();
     form.append("file", file);

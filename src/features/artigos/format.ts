@@ -1,5 +1,5 @@
 /**
- * Formato do texto dos artigos de ajuda (adendo kp). O mesmo arquivo existe no painel (`src/components/help/format.ts`):
+ * Formato do texto dos artigos de ajuda (adendo li). O mesmo arquivo existe no painel (`src/components/help/format.ts`):
  * o que o editor mostra em "Ver como o cliente" é o que o cliente vê.
  *
  * - linha em branco separa parágrafos;

@@ -49,7 +49,7 @@ const NOTA: Record<string, { label: string; tone: "neutral" | "success" | "warni
     SKIPPED: { label: "Não emitida (estorno)", tone: "neutral" },
   };
 
-/** Notas fiscais do cliente (B18, adendo ks): situação da emissão automática, endereço e uma linha por nota. */
+/** Notas fiscais do cliente (B18, adendo ll): situação da emissão automática, endereço e uma linha por nota. */
 function NfseSection({ nfse }: { nfse: AsaasNfse }) {
   const situacao =
     nfse.state === "off"
@@ -110,7 +110,7 @@ const ORIGEM: Record<string, string> = {
   closed: "cobrança automática fechada (falta a data de corte no Admin)",
 };
 
-/** Cobrança manual (como os clientes atuais) ou automática pelo Asaas — escolha da equipe, com motivo (adendo kv). */
+/** Cobrança manual (como os clientes atuais) ou automática pelo Asaas — escolha da equipe, com motivo (adendo lo). */
 function ModeBox({
   companyId,
   automatic,
@@ -242,7 +242,7 @@ function ActivateForm({
   );
 }
 
-/** Estorno ou cancelamento (adendo kx): cancela no Asaas; uso até a data; depois, suspensa até escolher outro plano. */
+/** Estorno ou cancelamento (adendo lq): cancela no Asaas; uso até a data; depois, suspensa até escolher outro plano. */
 function EndForm({
   companyId,
   sub,

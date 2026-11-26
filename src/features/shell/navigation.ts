@@ -1,16 +1,20 @@
 import {
   AlarmClock,
+  BarChart3,
   BellRing,
   BookOpen,
   Building2,
   CirclePlus,
   Gauge,
+  ScrollText,
+  LifeBuoy,
   Palette,
   UserRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
 import type { Panel } from "@/api/partners";
+import { canHandleTickets } from "@/lib/support";
 
 export interface NavItem {
   to: string;
@@ -21,11 +25,16 @@ export interface NavItem {
 }
 
 const always = () => true;
+/** D27: o dono e os administradores do parceiro, e a equipe AG3. */
+export const canSeeAudit = (p: Panel) =>
+  p.kind === "ag3" || p.member_role === "owner" || p.member_role === "admin";
 
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Carteira", icon: Building2, visible: always },
-  // o dashboard do Django Admin, só para a equipe AG3 (adendo lg)
+  // o dashboard do Django Admin, só para a equipe AG3 (adendo lz)
   { to: "/visao-ag3", label: "Visão AG3", icon: Gauge, visible: (p) => p.kind === "ag3" },
+  { to: "/chamados", label: "Chamados", icon: LifeBuoy, visible: canHandleTickets },
+  { to: "/relatorios-sla", label: "Relatórios de SLA", icon: BarChart3, visible: always },
   { to: "/alertas", label: "Alertas", icon: BellRing, visible: always },
   { to: "/atrasados", label: "Mensalidades em atraso", icon: AlarmClock, visible: always },
   {
@@ -37,6 +46,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { to: "/equipe", label: "Equipe", icon: Users, visible: (p) => p.kind === "partner" },
   { to: "/marca", label: "Marca", icon: Palette, visible: (p) => p.kind === "partner" },
+  { to: "/auditoria", label: "Auditoria", icon: ScrollText, visible: canSeeAudit },
   { to: "/artigos", label: "Artigos de ajuda", icon: BookOpen, visible: always },
   { to: "/conta", label: "Minha conta", icon: UserRound, visible: always },
 ];

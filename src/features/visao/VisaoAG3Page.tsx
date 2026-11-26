@@ -605,7 +605,7 @@ function Body({ d }: { d: StaffDashboard }) {
   );
 }
 
-/** Visão AG3 (adendo lg): o dashboard do Django Admin no painel, só para a equipe AG3. */
+/** Visão AG3 (adendo lz): o dashboard do Django Admin no painel, só para a equipe AG3. */
 export function VisaoAG3Page() {
   const client = useQueryClient();
   const query = useQuery({ queryKey: KEY, queryFn: () => staffApi.dashboard() });

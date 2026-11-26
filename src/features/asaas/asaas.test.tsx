@@ -6,6 +6,12 @@ import { partnersApi, type CompanyDetail } from "@/api/partners";
 import { setToken } from "@/lib/session";
 import { partnerPanel, renderApp, staffPanel } from "@/test/render";
 
+vi.mock("@/api/audit", () => ({
+  auditApi: {
+    list: vi.fn(async () => ({ data: [], total: 0, page: 1, limit: 50 })),
+    export: vi.fn(),
+  },
+}));
 vi.mock("@/api/billing", () => ({
   billingApi: {
     get: vi.fn().mockResolvedValue({
@@ -112,7 +118,7 @@ describe("cobrança no Asaas (adendo kn)", () => {
     expect(await within(secao).findByText("Ativa")).toBeInTheDocument();
   });
 
-  it("cliente atual aparece como cobrança manual e as notas com a situação (adendo ks)", async () => {
+  it("cliente atual aparece como cobrança manual e as notas com a situação (adendo ll)", async () => {
     vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
     vi.mocked(asaasApi.get).mockResolvedValue({
       ...pendente,
@@ -163,7 +169,7 @@ describe("cobrança no Asaas (adendo kn)", () => {
     expect(within(secao).getByText("conta sem dados fiscais")).toBeInTheDocument();
   });
 
-  it("equipe passa um cliente para a cobrança manual, com motivo (adendo kv)", async () => {
+  it("equipe passa um cliente para a cobrança manual, com motivo (adendo lo)", async () => {
     vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
     vi.mocked(asaasApi.get).mockResolvedValue({
       ...pendente,
@@ -198,7 +204,7 @@ describe("cobrança no Asaas (adendo kn)", () => {
     expect(within(secao).getByText(/escolhida pela equipe/)).toBeInTheDocument();
   });
 
-  it("encerrar o plano no fim do período (adendo kx)", async () => {
+  it("encerrar o plano no fim do período (adendo lq)", async () => {
     vi.mocked(partnersApi.me).mockReset().mockResolvedValue(staffPanel());
     const ativa = {
       ...pendente.subscriptions[0]!,

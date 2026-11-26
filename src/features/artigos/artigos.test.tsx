@@ -78,7 +78,7 @@ describe("Artigos de ajuda (onda 9)", () => {
     expect(await screen.findByText("Conectar o WhatsApp")).toBeInTheDocument(); // voltou à lista
   });
 
-  it("editor: barra de formatação, imagem enviada e o artigo como o cliente vê (adendo kp)", async () => {
+  it("editor: barra de formatação, imagem enviada e o artigo como o cliente vê (adendo li)", async () => {
     const url = "https://cdn.ag3.test/geonai/help/p1/tela.png";
     vi.mocked(helpApi.uploadImage).mockReset().mockResolvedValue(url);
     vi.mocked(helpApi.create).mockResolvedValue(art({ id: "n2" }));

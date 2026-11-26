@@ -18,7 +18,7 @@ const subscriptionSchema = z.object({
   created_at: z.string().nullable(),
   activated_at: z.string().nullable(),
   canceled_at: z.string().nullable(),
-  /** Fim no fim do período (adendo kx): último dia de uso e quando a suspensão foi aplicada. */
+  /** Fim no fim do período (adendo lq): último dia de uso e quando a suspensão foi aplicada. */
   ends_on: z.string().nullable().optional(),
   ended_at: z.string().nullable().optional(),
 });
@@ -34,7 +34,7 @@ const paymentSchema = z.object({
   updated_at: z.string().nullable(),
 });
 
-/** Nota fiscal (B18, adendo ks): uma por pagamento. `REQUESTED` = pedida e ainda não criada no Asaas. */
+/** Nota fiscal (B18, adendo ll): uma por pagamento. `REQUESTED` = pedida e ainda não criada no Asaas. */
 const invoiceSchema = z.object({
   external_id: z.string().nullable(),
   payment: z.string().nullable(),
@@ -72,9 +72,9 @@ const overviewSchema = z.object({
       description: z.string(),
     })
   ),
-  /** Falso = cliente atual, cobrado à mão pela equipe (adendo ks). Opcionais: backend anterior não manda. */
+  /** Falso = cliente atual, cobrado à mão pela equipe (adendo ll). Opcionais: backend anterior não manda. */
   automatic: z.boolean().optional(),
-  /** De onde vem a forma de cobrança (adendo kv): escolha da equipe, data de corte, lista do Admin, sandbox ou fechada. */
+  /** De onde vem a forma de cobrança (adendo lo): escolha da equipe, data de corte, lista do Admin, sandbox ou fechada. */
   mode_source: z.enum(["closed", "explicit", "list", "cutoff", "sandbox"]).optional(),
   nfse: nfseSchema.optional(),
 });
@@ -93,7 +93,7 @@ export const asaasApi = {
   sync: async (id: string): Promise<{ data: AsaasOverview; activated: number }> =>
     api.post(`${url(id)}/sync`, z.object({ data: overviewSchema, activated: z.number() }), {}),
 
-  /** Cobrança manual (como os clientes atuais) ou automática pelo Asaas, com motivo (adendo kv). */
+  /** Cobrança manual (como os clientes atuais) ou automática pelo Asaas, com motivo (adendo lo). */
   setMode: async (
     id: string,
     mode: "manual" | "automatic",
@@ -101,7 +101,7 @@ export const asaasApi = {
   ): Promise<AsaasOverview> =>
     (await api.put(`${url(id)}/mode`, z.object({ data: overviewSchema }), { mode, reason })).data,
 
-  /** Cancela o plano no Asaas; o cliente usa até `endsOn` e depois fica suspenso até escolher outro (adendo kx). */
+  /** Cancela o plano no Asaas; o cliente usa até `endsOn` e depois fica suspenso até escolher outro (adendo lq). */
   end: async (
     id: string,
     subscriptionId: string,
