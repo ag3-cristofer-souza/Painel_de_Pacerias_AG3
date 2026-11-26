@@ -16,6 +16,7 @@ import { ContaPage } from "@/features/conta/ContaPage";
 import { EquipePage } from "@/features/equipe/EquipePage";
 import { MensalidadePage } from "@/features/mensalidade/MensalidadePage";
 import { AppShell, RequireNav } from "@/features/shell/AppShell";
+import { VisaoAG3Page } from "@/features/visao/VisaoAG3Page";
 import { NovoWorkspacePage } from "@/features/workspace/NovoWorkspacePage";
 
 const queryClient = new QueryClient({
@@ -39,6 +40,7 @@ export function AppRoutes() {
           <Route element={<RequireNav />}>
             <Route index element={<CarteiraPage />} />
             <Route path="/clientes/:id" element={<ClientePage />} />
+            <Route path="/visao-ag3" element={<VisaoAG3Page />} />
             <Route path="/alertas" element={<AlertasPage />} />
             <Route path="/alertas/configurar" element={<ConfigurarAlertasPage />} />
             <Route path="/atrasados" element={<AtrasadosPage />} />

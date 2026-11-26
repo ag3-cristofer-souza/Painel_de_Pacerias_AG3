@@ -4,7 +4,7 @@ import { Button } from "@/ui/button";
 import { ErrorText } from "@/ui/feedback";
 
 /**
- * "Reenviar convite" (adendo lc): para quem ainda não entrou — o convite venceu (7 dias), caiu no spam ou foi apagado. O
+ * "Reenviar convite" (adendo lf): para quem ainda não entrou — o convite venceu (7 dias), caiu no spam ou foi apagado. O
  * link novo substitui o anterior.
  */
 export function ResendInvite({ email, send }: { email: string; send: () => Promise<void> }) {

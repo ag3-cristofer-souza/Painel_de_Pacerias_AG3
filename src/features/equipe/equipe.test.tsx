@@ -227,7 +227,7 @@ describe("equipe", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("pelo menos um dono ativo");
   });
 
-  it("reenvia o convite de quem ainda não entrou (adendo lc)", async () => {
+  it("reenvia o convite de quem ainda não entrou (adendo lf)", async () => {
     vi.mocked(teamApi.list).mockResolvedValue([eu, membro({ pending_invite: true })]);
     vi.mocked(teamApi.resendInvite).mockResolvedValue();
     renderApp("/equipe");

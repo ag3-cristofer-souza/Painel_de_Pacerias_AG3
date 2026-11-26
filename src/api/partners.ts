@@ -219,7 +219,7 @@ const memberSchema = z.object({
   role: z.string(),
   is_active: z.boolean(),
   created_at: z.string(),
-  /** Ainda não definiu a senha pelo convite (adendo lc). */
+  /** Ainda não definiu a senha pelo convite (adendo lf). */
   pending_invite: z.boolean().optional(),
 });
 

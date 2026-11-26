@@ -4,6 +4,7 @@ import {
   BookOpen,
   Building2,
   CirclePlus,
+  Gauge,
   Palette,
   UserRound,
   Users,
@@ -23,6 +24,8 @@ const always = () => true;
 
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Carteira", icon: Building2, visible: always },
+  // o dashboard do Django Admin, só para a equipe AG3 (adendo lg)
+  { to: "/visao-ag3", label: "Visão AG3", icon: Gauge, visible: (p) => p.kind === "ag3" },
   { to: "/alertas", label: "Alertas", icon: BellRing, visible: always },
   { to: "/atrasados", label: "Mensalidades em atraso", icon: AlarmClock, visible: always },
   {
